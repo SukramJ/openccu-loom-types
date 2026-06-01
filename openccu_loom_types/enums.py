@@ -362,6 +362,7 @@ class IncidentType(str, Enum):
     RPCError = "rpc_error"
     RPCFault = "rpc_fault"
     RecoveryFailed = "recovery_failed"
+    RetryExhausted = "retry_exhausted"
 
 class IntegrationIssueSeverity(str, Enum):
     Error = "error"
@@ -430,6 +431,7 @@ class Parameter(str, Enum):
     DisplayDataCommit = "DISPLAY_DATA_COMMIT"
     DisplayDataID = "DISPLAY_DATA_ID"
     DisplayDataIcon = "DISPLAY_DATA_ICON"
+    DisplayDataScrolling = "DISPLAY_DATA_SCROLLING"
     DisplayDataString = "DISPLAY_DATA_STRING"
     DisplayDataTextColor = "DISPLAY_DATA_TEXT_COLOR"
     DoorCommand = "DOOR_COMMAND"
@@ -691,6 +693,7 @@ class RecoveryStage(str, Enum):
     Reconnecting = "reconnecting"
     Recovered = "recovered"
     StabilityCheck = "stability_check"
+    SyncHubData = "sync_hub_data"
     TCPChecking = "tcp_checking"
     WarmingUp = "warming_up"
 
@@ -720,6 +723,21 @@ class RollbackReason(str, Enum):
     SendError = "send_error"
     Timeout = "timeout"
     ValueMismatch = "mismatch"
+
+class ScheduleField(str, Enum):
+    AstroOffset = "ASTRO_OFFSET"
+    AstroType = "ASTRO_TYPE"
+    Condition = "CONDITION"
+    DurationBase = "DURATION_BASE"
+    DurationFactor = "DURATION_FACTOR"
+    FixedHour = "FIXED_HOUR"
+    FixedMinute = "FIXED_MINUTE"
+    Level = "LEVEL"
+    Level2 = "LEVEL_2"
+    RampTimeBase = "RAMP_TIME_BASE"
+    RampTimeFactor = "RAMP_TIME_FACTOR"
+    TargetChannels = "TARGET_CHANNELS"
+    Weekday = "WEEKDAY"
 
 class ScheduleProfile(str, Enum):
     P1 = "P1"

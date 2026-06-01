@@ -1,3 +1,7 @@
+# Version 0.1.4 (2026-06-01)
+
+- Feat: regenerate REST/WS types from updated `openapi.yaml` — adds two new push payloads `OptimisticRollbackPayload` (central, device_address, channel, parameter, paramset_key, reason, optional sent/present) and `DeviceTriggerPayload` (central, interface_id, device_address, channel, event_type, parameter, optional value). The corresponding `components.schemas` entries were missing from the daemon's `openapi.yaml` even though `wsapi.json` already catalogued the `datapoint.optimistic_rolled_back` and `device.trigger` broadcasts; both payloads are now generated into `rest.py` and re-exported from `openccu_loom_types.ws`. Pure additions — no existing model changed.
+
 # Version 0.1.3 (2026-05-31)
 
 - Feat: regenerate REST types from `openapi.yaml`, which now carries proper `components.schemas` for the schedule, link and calculated-data-point surfaces (previously inline/empty, so no models were generated). Adds: `Schedule`, `ScheduleChannelRef`, `ClimateProfile`, `ClimateWeekday`, `ClimatePeriod`, `SimpleScheduleEntry`, `SetActiveProfileRequest`, `WeekProfileResponse` (schedules); `Link`, `AddLinkRequest`, `CentralLinksStatus` (links); `CalculatedDPSummary`, `CalculatedDPDetail` (calculated data points). Pure additions — no existing model changed.
