@@ -1,3 +1,7 @@
+# Version 0.1.3 (2026-05-31)
+
+- Feat: regenerate REST types from `openapi.yaml`, which now carries proper `components.schemas` for the schedule, link and calculated-data-point surfaces (previously inline/empty, so no models were generated). Adds: `Schedule`, `ScheduleChannelRef`, `ClimateProfile`, `ClimateWeekday`, `ClimatePeriod`, `SimpleScheduleEntry`, `SetActiveProfileRequest`, `WeekProfileResponse` (schedules); `Link`, `AddLinkRequest`, `CentralLinksStatus` (links); `CalculatedDPSummary`, `CalculatedDPDetail` (calculated data points). Pure additions — no existing model changed.
+
 # Version 0.1.2 (2026-05-24)
 
 - Feat: regenerate REST/WS types from updated `openapi.yaml` — adds two new push payloads `DeviceCreatedPayload` (central, interface_id, device_address, model, optional source) and `DeviceRemovedPayload` (central, interface_id, device_address). Both are also re-exported from `openccu_loom_types.ws`.

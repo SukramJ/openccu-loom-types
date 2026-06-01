@@ -378,7 +378,6 @@ class Interface(str, Enum):
     BidCosWired = "BidCos-Wired"
     CUxD = "CUxD"
     HmIPRF = "HmIP-RF"
-    HmIPWired = "HmIP-Wired"
     VirtualDevices = "VirtualDevices"
 
 class InternalCustomID(str, Enum):
