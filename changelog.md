@@ -1,3 +1,7 @@
+# Version 0.1.6 (2026-06-07)
+
+- Feat: regenerate REST types from updated `openapi.yaml` — `ChannelSummary` gains `name` (user-defined channel name, empty when none is set) and `category` (OCCU channel-type string, mirroring `type` under its own key so consumers can route on channel purpose without parsing `type`). Pure additions — no existing field changed.
+
 # Version 0.1.5 (2026-06-07)
 
 - Feat: regenerate REST types from updated `openapi.yaml` — `ChannelSummary` gains `type`, `type_label` and `paramset_keys` (for the HA drop-in config panel) and `DeviceSummary` gains `ise_id` (for rename-by-ise_id). Pure additions — no existing field changed.
