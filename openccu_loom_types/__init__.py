@@ -17,4 +17,9 @@ Submodules:
 See README.md for the regeneration workflow.
 """
 
-__version__ = "0.1.4"
+from typing import Final
+
+from openccu_loom_types.const import VERSION
+
+__version__: Final = VERSION
+

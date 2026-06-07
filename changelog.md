@@ -1,3 +1,8 @@
+# Version 0.1.5 (2026-06-07)
+
+- Feat: regenerate REST types from updated `openapi.yaml` — `ChannelSummary` gains `type`, `type_label` and `paramset_keys` (for the HA drop-in config panel) and `DeviceSummary` gains `ise_id` (for rename-by-ise_id). Pure additions — no existing field changed.
+- Chore: the package version is now read from `openccu_loom_types.const.VERSION` (single source of truth); `pyproject.toml` declares `version` as dynamic via `[tool.setuptools.dynamic]` and `__version__` re-exports `const.VERSION`.
+
 # Version 0.1.4 (2026-06-01)
 
 - Feat: regenerate REST/WS types from updated `openapi.yaml` — adds two new push payloads `OptimisticRollbackPayload` (central, device_address, channel, parameter, paramset_key, reason, optional sent/present) and `DeviceTriggerPayload` (central, interface_id, device_address, channel, event_type, parameter, optional value). The corresponding `components.schemas` entries were missing from the daemon's `openapi.yaml` even though `wsapi.json` already catalogued the `datapoint.optimistic_rolled_back` and `device.trigger` broadcasts; both payloads are now generated into `rest.py` and re-exported from `openccu_loom_types.ws`. Pure additions — no existing model changed.
