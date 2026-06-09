@@ -1,3 +1,7 @@
+# Version 0.1.7 (2026-06-09)
+
+- Fix: `Info.capabilities` is now a forward-compatible `list[str]` instead of `list[Capability]` (closed enum). A daemon advertising capabilities the bindings don't yet know — e.g. `system.restart.supervised.v1`, `mcp.v1`, `mcp.write.v1` — no longer fails `Info` validation in older clients. The `Capability` enum (only ever referenced by this field) was dropped. The source `openapi.yaml` was changed in lock-step: `Info.capabilities.items` is now an open `type: string` (known values kept as `examples`), so regeneration reproduces the open type. Capabilities are a feature-gating set and must stay forward-compatible by design.
+
 # Version 0.1.6 (2026-06-07)
 
 - Feat: regenerate REST types from updated `openapi.yaml` — `ChannelSummary` gains `name` (user-defined channel name, empty when none is set) and `category` (OCCU channel-type string, mirroring `type` under its own key so consumers can route on channel purpose without parsing `type`). Pure additions — no existing field changed.

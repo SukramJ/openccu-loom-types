@@ -161,15 +161,6 @@ class Problem(BaseModel):
     errors: list[Error] | None = None
 
 
-class Capability(StrEnum):
-    rest_v1 = "rest.v1"
-    ws_broadcasts_v1 = "ws.broadcasts.v1"
-    errors_problem_details_v1 = "errors.problem_details.v1"
-    mqtt_discovery_v1 = "mqtt.discovery.v1"
-    matter_bridge_v1 = "matter.bridge.v1"
-    auth_oidc_v1 = "auth.oidc.v1"
-
-
 class Info(BaseModel):
     version: str = Field(..., description="Daemon build version (semver).")
     commit: str
@@ -180,9 +171,9 @@ class Info(BaseModel):
         ...,
         description="North-bound contract version (semver). Bumps independently\nof `version`. Minor bumps add backwards-compatible\ncapabilities; major bumps remove or rename existing\npayload fields, scopes, or capabilities.\n",
     )
-    capabilities: list[Capability] = Field(
+    capabilities: list[str] = Field(
         ...,
-        description="Runtime feature set. Always-on entries:\n`rest.v1`, `ws.broadcasts.v1`, `errors.problem_details.v1`.\nConditional entries surface only when configured:\n`mqtt.discovery.v1`, `matter.bridge.v1`, `auth.oidc.v1`.\n",
+        description="Runtime feature set. Always-on entries:\n`rest.v1`, `ws.broadcasts.v1`, `errors.problem_details.v1`.\nConditional entries surface only when configured:\n`mqtt.discovery.v1`, `matter.bridge.v1`, `auth.oidc.v1`.\nOpen-ended on purpose: clients ignore unrecognised entries.\n",
     )
 
 
