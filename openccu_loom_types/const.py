@@ -5,4 +5,4 @@
 
 from typing import Final
 
-VERSION: Final = "0.1.9"
+VERSION: Final = "0.1.10"

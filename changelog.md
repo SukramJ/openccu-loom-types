@@ -1,3 +1,7 @@
+# Version 0.1.10 (2026-06-10)
+
+- Feat: regenerate REST types from updated `openapi.yaml` — `CustomDPSummary` gains `config` (static configuration block: `min_temp`/`max_temp`/`temp_step`, available `hvac_modes`, `preset_modes`; previously sent by the daemon but silently dropped by the generated model) and `state` (live state snapshot with the same semantic keys as the WS `custom_data_point.state_changed` event, for bootstrap seeding). Pure additions — no existing field changed.
+
 # Version 0.1.9 (2026-06-10)
 
 - Feat: regenerate REST types from updated `openapi.yaml` — `MatterExposure` gains `parameter_label` (ready-to-display caption for the data point behind `dp_key`: the locale-aware channel-typed translation when one exists, otherwise the title-cased key; same resolution as `DataPointSummary.parameter_label`), and `DataPointSummary.parameter_label` gains its schema description (ready-to-display row caption, always non-empty, carries text even when `label_omitted` is true). Pure additions — no existing field changed.
