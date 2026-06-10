@@ -1,3 +1,7 @@
+# Version 0.1.8 (2026-06-10)
+
+- Feat: regenerate REST types from updated `openapi.yaml` — `DataPointSummary` gains `translated_name` (the daemon's locale-aware per-entity name, identical to the MQTT discovery `name`; the parameter portion only, HA prepends the device name; empty when omitted) and `label_omitted` (true when the parameter is the "primary" one, so consumers collapse the entity name to the device name alone). Pure additions — no existing field changed.
+
 # Version 0.1.7 (2026-06-09)
 
 - Fix: `Info.capabilities` is now a forward-compatible `list[str]` instead of `list[Capability]` (closed enum). A daemon advertising capabilities the bindings don't yet know — e.g. `system.restart.supervised.v1`, `mcp.v1`, `mcp.write.v1` — no longer fails `Info` validation in older clients. The `Capability` enum (only ever referenced by this field) was dropped. The source `openapi.yaml` was changed in lock-step: `Info.capabilities.items` is now an open `type: string` (known values kept as `examples`), so regeneration reproduces the open type. Capabilities are a feature-gating set and must stay forward-compatible by design.
