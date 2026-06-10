@@ -1,3 +1,7 @@
+# Version 0.1.9 (2026-06-10)
+
+- Feat: regenerate REST types from updated `openapi.yaml` — `MatterExposure` gains `parameter_label` (ready-to-display caption for the data point behind `dp_key`: the locale-aware channel-typed translation when one exists, otherwise the title-cased key; same resolution as `DataPointSummary.parameter_label`), and `DataPointSummary.parameter_label` gains its schema description (ready-to-display row caption, always non-empty, carries text even when `label_omitted` is true). Pure additions — no existing field changed.
+
 # Version 0.1.8 (2026-06-10)
 
 - Feat: regenerate REST types from updated `openapi.yaml` — `DataPointSummary` gains `translated_name` (the daemon's locale-aware per-entity name, identical to the MQTT discovery `name`; the parameter portion only, HA prepends the device name; empty when omitted) and `label_omitted` (true when the parameter is the "primary" one, so consumers collapse the entity name to the device name alone). Pure additions — no existing field changed.
