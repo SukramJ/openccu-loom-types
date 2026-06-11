@@ -1,3 +1,8 @@
+# Version 0.1.13 (2026-06-11)
+
+- Feat: **contract identity constants** — `const.py` gains `SCHEMA_DIGEST` and `DAEMON_API_VERSION` (exported at package level), stamped by the new `scripts/stamp_const.py` via `make generate`. The digest mirrors the daemon's contract-digest definition (daemon ADR 0028); clients compare it against `GET /api/v1/info`.`schema_digest` for an exact type/daemon build-parity check. Stamps ship empty until the first regeneration against a daemon release that serves the field.
+- Feat: **automated regeneration** — the `regenerate-on-daemon-release` workflow (repository_dispatch from the daemon's release pipeline, manual `workflow_dispatch` fallback) regenerates all modules from the released tag, stamps the constants, bumps the patch version and opens a PR.
+
 # Version 0.1.12 (2026-06-11)
 
 - Feat: regenerate REST types — `DataPointSummary` gains `usage` (the daemon pipeline's visibility verdict: `data_point`, `no_create`, `ignored`, `ce_primary`, `ce_secondary`, `ce_visible`, `event`; clients skip entity creation for `no_create`/`ignored`, the same gate the MQTT discovery plane applies). Pure addition.
