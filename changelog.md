@@ -1,3 +1,7 @@
+# Version 0.1.11 (2026-06-11)
+
+- Feat: regenerate REST types — `ProgramSummary` gains `central`, `last_executed`, `is_internal` (CCU-internal helper programs; clients skip them for HA entities) and `SysvarSummary` gains `central`, `min`, `max`. The daemon already sent all of these; the spec omission made pydantic drop them, so clients could neither filter foreign-central hub entries nor exclude internal programs. Pure additions.
+
 # Version 0.1.10 (2026-06-10)
 
 - Feat: regenerate REST types from updated `openapi.yaml` — `CustomDPSummary` gains `config` (static configuration block: `min_temp`/`max_temp`/`temp_step`, available `hvac_modes`, `preset_modes`; previously sent by the daemon but silently dropped by the generated model) and `state` (live state snapshot with the same semantic keys as the WS `custom_data_point.state_changed` event, for bootstrap seeding). Pure additions — no existing field changed.
