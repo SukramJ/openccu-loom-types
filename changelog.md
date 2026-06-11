@@ -1,4 +1,4 @@
-# Version 0.1.13 (2026-06-11)
+# Version 0.1.14 (2026-06-11)
 
 - Feat: regenerate REST types — `SysvarSummary` gains `is_internal` (CCU bookkeeping variables; clients skip them) and `is_extended` (description marker; clients expose the writable entity flavour). Pure additions.
 
