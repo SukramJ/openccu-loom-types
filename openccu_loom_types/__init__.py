@@ -19,7 +19,9 @@ See README.md for the regeneration workflow.
 
 from typing import Final
 
-from openccu_loom_types.const import VERSION
+from openccu_loom_types.const import DAEMON_API_VERSION, SCHEMA_DIGEST, VERSION
 
 __version__: Final = VERSION
+
+__all__ = ["DAEMON_API_VERSION", "SCHEMA_DIGEST", "VERSION", "__version__"]
 

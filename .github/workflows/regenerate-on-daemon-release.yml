@@ -1,0 +1,125 @@
+name: "Regenerate: on daemon release"
+# Fired by the openccu-loom release workflow via repository_dispatch
+# (event_type: daemon-release, client_payload.tag: the released tag).
+# Checks out the daemon at that tag, regenerates every generated
+# module from its committed contract assets (fresh at any release tag
+# — the daemon's CI guards enforce that), stamps the schema digest +
+# api_version, bumps the package patch version, and opens a PR.
+# Manual fallback: workflow_dispatch with the tag as input.
+# yamllint disable-line rule:truthy
+on:
+  repository_dispatch:
+    types: [daemon-release]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "openccu-loom release tag (e.g. v0.2.0)"
+        required: true
+      breaking:
+        description: "Contract change is breaking (bumps minor instead of patch)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  regenerate:
+    if: github.repository_owner == 'SukramJ'
+    name: Regenerate types from daemon tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve daemon tag
+        run: |
+          TAG="${{ github.event.client_payload.tag || github.event.inputs.tag }}"
+          if [ -z "$TAG" ]; then
+            echo "No daemon tag in payload/input" >&2
+            exit 1
+          fi
+          echo "DAEMON_TAG=${TAG}" >> "$GITHUB_ENV"
+
+      - name: Checkout types repo
+        uses: actions/checkout@v6
+
+      - name: Checkout daemon at the released tag
+        uses: actions/checkout@v6
+        with:
+          repository: SukramJ/openccu-loom
+          ref: ${{ env.DAEMON_TAG }}
+          path: openccu-loom
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install generation tooling
+        run: pip install -e '.[dev]'
+
+      - name: Regenerate modules + stamp contract identity
+        run: make generate OPENCCU_LOOM_REPO=openccu-loom
+
+      # Patch bump for compatible regenerations; minor bump (patch
+      # reset) when the daemon flags the contract change as breaking —
+      # the breaking-ness then shows in the types version itself, and
+      # exact-pinning consumers (openccu-loom-client) see it in the diff.
+      - name: Bump package version
+        env:
+          BREAKING: ${{ github.event.client_payload.breaking || github.event.inputs.breaking || 'false' }}
+        run: |
+          python3 - <<'EOF'
+          import os
+          import re
+          from pathlib import Path
+
+          breaking = os.environ.get("BREAKING", "false").lower() == "true"
+          path = Path("openccu_loom_types/const.py")
+          text = path.read_text(encoding="utf-8")
+          match = re.search(r'^VERSION: Final = "(\d+)\.(\d+)\.(\d+)"$', text, re.MULTILINE)
+          if not match:
+              raise SystemExit("VERSION constant not found")
+          major, minor, patch = map(int, match.groups())
+          if breaking:
+              minor, patch = minor + 1, 0
+          else:
+              patch += 1
+          new = f'VERSION: Final = "{major}.{minor}.{patch}"'
+          path.write_text(text[: match.start()] + new + text[match.end() :], encoding="utf-8")
+          print(f"{new} (breaking={breaking})")
+          EOF
+
+      - name: Open regeneration PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BREAKING: ${{ github.event.client_payload.breaking || github.event.inputs.breaking || 'false' }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- openccu_loom_types/; then
+            echo "No generated-module changes for ${DAEMON_TAG} — nothing to do"
+            exit 0
+          fi
+          VERSION="$(sed -nE 's/^VERSION: Final = "([^"]+)"$/\1/p' openccu_loom_types/const.py)"
+          BRANCH="regen/daemon-${DAEMON_TAG}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add openccu_loom_types/
+          git commit -s -m "feat: regenerate from openccu-loom ${DAEMON_TAG} (${VERSION})"
+          git push origin "$BRANCH"
+          TITLE_SUFFIX=""
+          BREAKING_NOTE=""
+          if [ "$BREAKING" = "true" ]; then
+            TITLE_SUFFIX=" (BREAKING)"
+            BREAKING_NOTE="
+          **The daemon flagged this contract change as BREAKING** — the minor version was bumped; review the module diff for removed/renamed fields before merging.
+          "
+          fi
+          gh pr create \
+            --title "Regenerate types from openccu-loom ${DAEMON_TAG}${TITLE_SUFFIX}" \
+            --body "Automated regeneration from the daemon release \`${DAEMON_TAG}\`.
+          ${BREAKING_NOTE}
+          - generated modules: \`enums.py\`, \`rest.py\`, \`ws.py\`
+          - \`const.py\`: schema digest + daemon api_version stamped, package version bumped to \`${VERSION}\`
+
+          Review the module diff, then merge and tag \`v${VERSION}\` to publish."
