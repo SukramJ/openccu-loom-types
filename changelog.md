@@ -1,3 +1,7 @@
+# Version 0.1.12 (2026-06-11)
+
+- Feat: regenerate REST types — `DataPointSummary` gains `usage` (the daemon pipeline's visibility verdict: `data_point`, `no_create`, `ignored`, `ce_primary`, `ce_secondary`, `ce_visible`, `event`; clients skip entity creation for `no_create`/`ignored`, the same gate the MQTT discovery plane applies). Pure addition.
+
 # Version 0.1.11 (2026-06-11)
 
 - Feat: regenerate REST types — `ProgramSummary` gains `central`, `last_executed`, `is_internal` (CCU-internal helper programs; clients skip them for HA entities) and `SysvarSummary` gains `central`, `min`, `max`. The daemon already sent all of these; the spec omission made pydantic drop them, so clients could neither filter foreign-central hub entries nor exclude internal programs. Pure additions.
