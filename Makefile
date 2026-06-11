@@ -1,4 +1,4 @@
-.PHONY: help generate generate-enums generate-rest generate-ws clean test
+.PHONY: help generate generate-enums generate-rest generate-ws stamp-const clean test
 
 OPENCCU_LOOM_REPO ?= ../openccu-loom
 PKG := openccu_loom_types
@@ -6,7 +6,12 @@ PKG := openccu_loom_types
 help: ## show this help
 	@awk -F':.*?## ' '/^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-generate: generate-enums generate-rest generate-ws ## regenerate every Pydantic / Enum module from the daemon's schema assets
+generate: generate-enums generate-rest generate-ws stamp-const ## regenerate every Pydantic / Enum module from the daemon's schema assets
+
+stamp-const: ## stamp const.py with the daemon's schema digest + api_version
+	python3 scripts/stamp_const.py \
+		--openccu-loom-repo $(OPENCCU_LOOM_REPO) \
+		--const-py $(PKG)/const.py
 
 generate-enums: ## regenerate openccu_loom_types/enums.py from $(OPENCCU_LOOM_REPO)/assets/schemas/enums.json
 	python3 scripts/gen_enums.py \

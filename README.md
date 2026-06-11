@@ -49,13 +49,29 @@ never re-parses Go source.
 
 Install both with `pip install -e '.[dev]'`.
 
-## Versioning
+## Versioning & contract identity
 
-The package version (`pyproject.toml`) tracks the daemon's
-`api_version` (currently `1.0.0`). Minor bumps add fields without
-breaking existing consumers; major bumps remove or rename payload
-fields, scopes, or capabilities — see ADR-0020 in the daemon repo
-for the contract evolution policy.
+The package version (`const.VERSION`) is independent of the daemon
+version; the regeneration workflow bumps the patch number on every
+daemon release. The daemon coupling is carried by two stamped
+constants in `const.py` (written by `make generate` →
+`scripts/stamp_const.py`):
+
+- `SCHEMA_DIGEST` — canonical digest of the daemon's contract assets
+  these types were generated from (definition: daemon ADR-0028).
+  Clients compare it against `GET /api/v1/info`.`schema_digest` to
+  verify exact type/daemon parity at connect time.
+- `DAEMON_API_VERSION` — the daemon's `api_version` at generation
+  time. Minor bumps add fields without breaking existing consumers;
+  major bumps remove or rename payload fields, scopes, or
+  capabilities — see ADR-0020 in the daemon repo.
+
+Regeneration is automated: the daemon's release workflow fires a
+`repository_dispatch` (`daemon-release`) at this repo; the
+`regenerate-on-daemon-release` workflow checks out the daemon at the
+released tag, regenerates all modules, stamps the constants, bumps
+the patch version, and opens a PR. Manual fallback:
+`workflow_dispatch` with the tag, or the local two-step flow above.
 
 ## What this package does NOT contain
 
