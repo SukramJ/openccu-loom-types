@@ -1,3 +1,7 @@
+# Version 0.1.14 (2026-06-11)
+
+- Feat: regenerate REST types — `SysvarSummary` gains `is_internal` (CCU bookkeeping variables; clients skip them) and `is_extended` (description marker; clients expose the writable entity flavour). Pure additions.
+
 # Version 0.1.13 (2026-06-11)
 
 - Feat: **contract identity constants** — `const.py` gains `SCHEMA_DIGEST` and `DAEMON_API_VERSION` (exported at package level), stamped by the new `scripts/stamp_const.py` via `make generate`. The digest mirrors the daemon's contract-digest definition (daemon ADR 0028); clients compare it against `GET /api/v1/info`.`schema_digest` for an exact type/daemon build-parity check. Stamps ship empty until the first regeneration against a daemon release that serves the field.
