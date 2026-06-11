@@ -15,6 +15,10 @@ on:
       tag:
         description: "openccu-loom release tag (e.g. v0.2.0)"
         required: true
+      breaking:
+        description: "Contract change is breaking (bumps minor instead of patch)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -56,26 +60,39 @@ jobs:
       - name: Regenerate modules + stamp contract identity
         run: make generate OPENCCU_LOOM_REPO=openccu-loom
 
-      - name: Bump package patch version
+      # Patch bump for compatible regenerations; minor bump (patch
+      # reset) when the daemon flags the contract change as breaking —
+      # the breaking-ness then shows in the types version itself, and
+      # exact-pinning consumers (openccu-loom-client) see it in the diff.
+      - name: Bump package version
+        env:
+          BREAKING: ${{ github.event.client_payload.breaking || github.event.inputs.breaking || 'false' }}
         run: |
           python3 - <<'EOF'
+          import os
           import re
           from pathlib import Path
 
+          breaking = os.environ.get("BREAKING", "false").lower() == "true"
           path = Path("openccu_loom_types/const.py")
           text = path.read_text(encoding="utf-8")
           match = re.search(r'^VERSION: Final = "(\d+)\.(\d+)\.(\d+)"$', text, re.MULTILINE)
           if not match:
               raise SystemExit("VERSION constant not found")
           major, minor, patch = map(int, match.groups())
-          new = f'VERSION: Final = "{major}.{minor}.{patch + 1}"'
+          if breaking:
+              minor, patch = minor + 1, 0
+          else:
+              patch += 1
+          new = f'VERSION: Final = "{major}.{minor}.{patch}"'
           path.write_text(text[: match.start()] + new + text[match.end() :], encoding="utf-8")
-          print(new)
+          print(f"{new} (breaking={breaking})")
           EOF
 
       - name: Open regeneration PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BREAKING: ${{ github.event.client_payload.breaking || github.event.inputs.breaking || 'false' }}
         run: |
           set -euo pipefail
           if git diff --quiet -- openccu_loom_types/; then
@@ -90,10 +107,18 @@ jobs:
           git add openccu_loom_types/
           git commit -s -m "feat: regenerate from openccu-loom ${DAEMON_TAG} (${VERSION})"
           git push origin "$BRANCH"
+          TITLE_SUFFIX=""
+          BREAKING_NOTE=""
+          if [ "$BREAKING" = "true" ]; then
+            TITLE_SUFFIX=" (BREAKING)"
+            BREAKING_NOTE="
+          **The daemon flagged this contract change as BREAKING** — the minor version was bumped; review the module diff for removed/renamed fields before merging.
+          "
+          fi
           gh pr create \
-            --title "Regenerate types from openccu-loom ${DAEMON_TAG}" \
+            --title "Regenerate types from openccu-loom ${DAEMON_TAG}${TITLE_SUFFIX}" \
             --body "Automated regeneration from the daemon release \`${DAEMON_TAG}\`.
-
+          ${BREAKING_NOTE}
           - generated modules: \`enums.py\`, \`rest.py\`, \`ws.py\`
           - \`const.py\`: schema digest + daemon api_version stamped, package version bumped to \`${VERSION}\`
 
