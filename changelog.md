@@ -1,3 +1,7 @@
+# Version 0.1.17 (2026-06-12)
+
+- Feat: regenerate for daemon api 1.5.0 — `CalculatedDPSummary.translated_name` (REST calc-dps + WS calc_dp.*; locale-aware label, same chain as generic DPs). Pure addition.
+
 # Version 0.1.16 (2026-06-12)
 
 - Feat: regenerate REST types for daemon api 1.4.0 — new hub-singleton/schedule contract: `SystemUpdateEntry` (GET /system/update), `HubMetricsEntry` (GET /system/metrics), `InstallModeInterfaceEntry`/`InstallModeInterfaceRequest` (GET+POST /install-mode/interfaces), `ChannelLockRequest` (PUT …/week_profile/channel-locks/{key}). Pure additions.
