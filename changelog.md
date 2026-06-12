@@ -1,3 +1,7 @@
+# Version 0.1.15 (2026-06-11)
+
+- Feat: regenerate REST types — `SysvarSummary` gains `vid` (CCU-internal numeric variable ID / ise_id; clients apply the reference stack's fixed-ID exclusions 40/41 = alarm/service messages). `SCHEMA_DIGEST`/`DAEMON_API_VERSION` are stamped for the first time (api_version 1.3.0). Pure additions.
+
 # Version 0.1.14 (2026-06-11)
 
 - Feat: regenerate REST types — `SysvarSummary` gains `is_internal` (CCU bookkeeping variables; clients skip them) and `is_extended` (description marker; clients expose the writable entity flavour). Pure additions.
