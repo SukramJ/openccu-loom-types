@@ -1,3 +1,7 @@
+# Version 0.1.16 (2026-06-12)
+
+- Feat: regenerate REST types for daemon api 1.4.0 — new hub-singleton/schedule contract: `SystemUpdateEntry` (GET /system/update), `HubMetricsEntry` (GET /system/metrics), `InstallModeInterfaceEntry`/`InstallModeInterfaceRequest` (GET+POST /install-mode/interfaces), `ChannelLockRequest` (PUT …/week_profile/channel-locks/{key}). Pure additions.
+
 # Version 0.1.15 (2026-06-11)
 
 - Feat: regenerate REST types — `SysvarSummary` gains `vid` (CCU-internal numeric variable ID / ise_id; clients apply the reference stack's fixed-ID exclusions 40/41 = alarm/service messages). `SCHEMA_DIGEST`/`DAEMON_API_VERSION` are stamped for the first time (api_version 1.3.0). Pure additions.
