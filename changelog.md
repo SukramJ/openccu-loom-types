@@ -1,3 +1,7 @@
+# Version 0.1.18 (2026-06-12)
+
+- Feat: regenerate for daemon api 1.6.0 — `ChannelSummary` gains the channel-group contract: `group_no`, `is_group_master`, `is_in_multi_group`, `sub_device_name` plus the group-master-resolved `room`. Drives the HA sub-device split in external clients. Pure additions.
+
 # Version 0.1.17 (2026-06-12)
 
 - Feat: regenerate for daemon api 1.5.0 — `CalculatedDPSummary.translated_name` (REST calc-dps + WS calc_dp.*; locale-aware label, same chain as generic DPs). Pure addition.
