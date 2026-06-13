@@ -1,3 +1,7 @@
+# Version 0.1.19 (2026-06-13)
+
+- Feat: regenerate for daemon api 1.7.0 — `WeekProfileResponse` gains `available_target_channels` (a map of channel-lock key → `TargetChannelSummary` with `channel_no`, `channel_address`, `name`, `channel_type`). Lets external clients name a per-channel schedule switch after the actuator channel it controls. Pure addition.
+
 # Version 0.1.18 (2026-06-12)
 
 - Feat: regenerate for daemon api 1.6.0 — `ChannelSummary` gains the channel-group contract: `group_no`, `is_group_master`, `is_in_multi_group`, `sub_device_name` plus the group-master-resolved `room`. Drives the HA sub-device split in external clients. Pure additions.
