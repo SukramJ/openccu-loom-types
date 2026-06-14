@@ -1,3 +1,7 @@
+# Version 0.1.20 (2026-06-14)
+
+- Feat: regenerate for daemon api 1.9.0. `SysvarSummary` / `ProgramSummary` gain `enabled_default: bool | None` — the daemon's resolved marker-driven enabled-by-default flag, so clients no longer re-derive it from markers (which the daemon strips from the description). Also catches up the api 1.8.0 additions skipped since 0.1.19: `CentralBehavior` (per-central behaviour toggles) plus the `SysvarMarker` / `ProgramMarker` enums and the reworked central config schema. `DAEMON_API_VERSION` → 1.9.0; schema digest refreshed.
+
 # Version 0.1.19 (2026-06-13)
 
 - Feat: regenerate for daemon api 1.7.0 — `WeekProfileResponse` gains `available_target_channels` (a map of channel-lock key → `TargetChannelSummary` with `channel_no`, `channel_address`, `name`, `channel_type`). Lets external clients name a per-channel schedule switch after the actuator channel it controls. Pure addition.
