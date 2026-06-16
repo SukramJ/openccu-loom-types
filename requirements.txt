@@ -1,0 +1,2 @@
+# Runtime-Abhängigkeiten (siehe pyproject.toml -> [project].dependencies)
+pydantic>=2.13.4

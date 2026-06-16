@@ -1,3 +1,7 @@
+# Version 0.1.21 (2026-06-16)
+
+- Feat: regenerate for daemon api 1.10.0. No type/schema changes — `rest.py`, `ws.py`, `enums.py` are byte-identical apart from the regeneration timestamp. Only the contract identity moves: `DAEMON_API_VERSION` → 1.10.0 and `SCHEMA_DIGEST` refreshed so clients keep an exact build-parity check against `GET /api/v1/info`.
+
 # Version 0.1.20 (2026-06-14)
 
 - Feat: regenerate for daemon api 1.9.0. `SysvarSummary` / `ProgramSummary` gain `enabled_default: bool | None` — the daemon's resolved marker-driven enabled-by-default flag, so clients no longer re-derive it from markers (which the daemon strips from the description). Also catches up the api 1.8.0 additions skipped since 0.1.19: `CentralBehavior` (per-central behaviour toggles) plus the `SysvarMarker` / `ProgramMarker` enums and the reworked central config schema. `DAEMON_API_VERSION` → 1.9.0; schema digest refreshed.

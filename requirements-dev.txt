@@ -1,0 +1,6 @@
+# Entwicklungs-Abhängigkeiten (siehe pyproject.toml -> [project.optional-dependencies].dev)
+-r requirements.txt
+datamodel-code-generator>=0.64.0
+pytest>=9.1.0
+ruff>=0.15.17
+pur==7.4.0
