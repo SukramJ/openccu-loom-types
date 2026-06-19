@@ -1,3 +1,7 @@
+# Version 0.1.22 (2026-06-19)
+
+- Feat: regenerate for daemon api 1.13.0 — new `HistoryBucket` REST type (`ts`, `avg`, `min`, `max`, `count`): a downsampled time-series aggregate, each bucket carrying the mean/min/max of its raw samples plus the sample `count` over the bucket's UTC time span. Pure addition; `DAEMON_API_VERSION` → 1.13.0 and `SCHEMA_DIGEST` refreshed.
+
 # Version 0.1.21 (2026-06-16)
 
 - Feat: regenerate for daemon api 1.10.0. No type/schema changes — `rest.py`, `ws.py`, `enums.py` are byte-identical apart from the regeneration timestamp. Only the contract identity moves: `DAEMON_API_VERSION` → 1.10.0 and `SCHEMA_DIGEST` refreshed so clients keep an exact build-parity check against `GET /api/v1/info`.
