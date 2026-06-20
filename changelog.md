@@ -1,3 +1,11 @@
+# Version 0.1.24 (2026-06-21)
+
+- Feat: regenerate for daemon api 1.17.0 — openccu-loom v0.7.1's REST
+  config-reload endpoints (`POST /devices/{addr}/reload`, `POST
+  /devices/{addr}/channels/{no}/reload`). The endpoints take only path params
+  and return a simple result, so no new named types are added; `DAEMON_API_VERSION`
+  → 1.17.0 and `SCHEMA_DIGEST` refreshed.
+
 # Version 0.1.23 (2026-06-20)
 
 - Feat: regenerate for daemon api 1.16.0 — openccu-loom v0.7.0's device-action services. New REST request/response types for the schedule-copy (`POST .../schedules/copy`, `.../week_profile/copy`) and system-variable fetch (`POST /sysvars/fetch`) endpoints; the new device actions (climate away-mode, on-time, cover combined, siren, text-display) and the `central.*` / `recording.*` / `reload_channel_config` commands ride the existing `cdp.invoke` / WS surface. Pure addition; `DAEMON_API_VERSION` → 1.16.0 and `SCHEMA_DIGEST` refreshed.
