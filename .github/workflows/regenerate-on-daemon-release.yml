@@ -100,11 +100,38 @@ jobs:
             exit 0
           fi
           VERSION="$(sed -nE 's/^VERSION: Final = "([^"]+)"$/\1/p' openccu_loom_types/const.py)"
+          API_VERSION="$(sed -nE 's/^DAEMON_API_VERSION: Final = "([^"]+)"$/\1/p' openccu_loom_types/const.py)"
+
+          # Seed a changelog section for the bumped version. release-on-tag
+          # extracts its release notes from changelog.md and ABORTS when the
+          # tagged version has no "# Version <version> (…)" section, so an
+          # entry must exist before the tag is pushed. This is an auto-generated
+          # baseline — enrich it in this PR before merging and tagging.
+          DATE="$(date -u +%Y-%m-%d)"
+          if ! grep -qF "# Version ${VERSION} (" changelog.md; then
+            KIND="Feat"
+            BREAKING_NOTE=""
+            if [ "$BREAKING" = "true" ]; then
+              KIND="Feat (BREAKING)"
+              BREAKING_NOTE=" The daemon flagged this contract change as BREAKING — review the module diff for removed/renamed fields before merging."
+            fi
+            {
+              printf '# Version %s (%s)\n\n' "${VERSION}" "${DATE}"
+              printf -- '- %s: regenerate from openccu-loom %s for daemon api %s. `DAEMON_API_VERSION` → %s and `SCHEMA_DIGEST` refreshed; see the generated module diff for added/changed types.%s\n\n' \
+                "${KIND}" "${DAEMON_TAG}" "${API_VERSION}" "${API_VERSION}" "${BREAKING_NOTE}"
+              cat changelog.md
+            } > changelog.md.new
+            mv changelog.md.new changelog.md
+            echo "Prepended changelog section for ${VERSION}"
+          else
+            echo "changelog.md already has a section for ${VERSION} — leaving it untouched"
+          fi
+
           BRANCH="regen/daemon-${DAEMON_TAG}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
-          git add openccu_loom_types/
+          git add openccu_loom_types/ changelog.md
           git commit -s -m "feat: regenerate from openccu-loom ${DAEMON_TAG} (${VERSION})"
           git push origin "$BRANCH"
           TITLE_SUFFIX=""
@@ -121,5 +148,6 @@ jobs:
           ${BREAKING_NOTE}
           - generated modules: \`enums.py\`, \`rest.py\`, \`ws.py\`
           - \`const.py\`: schema digest + daemon api_version stamped, package version bumped to \`${VERSION}\`
+          - \`changelog.md\`: seeded a baseline \`# Version ${VERSION}\` section (release-on-tag needs it) — **enrich it before merging**
 
-          Review the module diff, then merge and tag \`v${VERSION}\` to publish."
+          Review the module diff and changelog entry, then merge and tag \`v${VERSION}\` to publish."
