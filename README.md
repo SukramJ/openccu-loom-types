@@ -1,4 +1,4 @@
-# openccu-loom-types-py
+# openccu-loom-types
 
 Generated Pydantic models + enum definitions for the openccu-loom
 REST + WebSocket contract. Sister-repo to the
