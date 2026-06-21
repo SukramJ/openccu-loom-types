@@ -19,7 +19,7 @@ publishable as `openccu-loom-types` on PyPI.
 
 ## Why this exists (asks.md C1 + C3)
 
-Higher-level clients (`py-openccu-loom-client`, the future
+Higher-level clients (`openccu-loom-client`, the future
 homematicip_local refactor) need stable typed bindings against the
 daemon. Without a published types package each consumer would
 duplicate the model code and drift away from the daemon's wire
@@ -75,7 +75,7 @@ the patch version, and opens a PR. Manual fallback:
 
 ## What this package does NOT contain
 
-- HTTP / WebSocket transport — see `py-openccu-loom-client`
+- HTTP / WebSocket transport — see `openccu-loom-client`
   (when published) for the higher-level client.
 - Any business logic — types only.
 - Async helpers — types are framework-neutral.
