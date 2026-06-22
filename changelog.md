@@ -1,3 +1,7 @@
+# Version 0.1.26 (2026-06-22)
+
+- Feat: regenerate from openccu-loom v0.9.1 for daemon api 1.19.0. `DAEMON_API_VERSION` → 1.19.0 and `SCHEMA_DIGEST` refreshed; see the generated module diff for added/changed types.
+
 # Version 0.1.25 (2026-06-21)
 
 - Feat: regenerate for daemon api 1.18.0 — openccu-loom v0.8.0's hub-datapoint and device-trigger contract. New WS event payloads `HubCountChangedPayload` (alarm/service/inbox counts), `HubMetricChangedPayload` (`system_health`, `connection_latency_ms`, `last_event_age_seconds` with optional unit) and `HubConnectivityChangedPayload` (per-interface reachability + probe `latency_ms`), all re-exported from `ws.py`. New REST device-trigger summaries `EventGroupSummary` (channel-level trigger group: `kind`, `event_types`, `parameters`, `available`) carrying a nested `TriggeredEventSummary` (`parameter`, `value`, `triggered_at`) for the last fire. New REST hub-datapoint bundle `HubDataPoints` (`alarm_messages`, `service_messages`, `inbox`, `update`, plus optional `metrics`/`connectivity`/`install_mode` lists) over `HubCountDataPoint`, `HubUpdateDataPoint`, `HubMetricDataPoint`, `HubConnectivityDataPoint` and `HubInstallModeDataPoint`. Pure additions; `DAEMON_API_VERSION` → 1.18.0 and `SCHEMA_DIGEST` refreshed.
