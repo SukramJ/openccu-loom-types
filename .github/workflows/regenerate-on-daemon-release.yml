@@ -163,5 +163,7 @@ jobs:
           # Auto-merge once required status checks pass. Squash to keep main's
           # one-commit-per-regeneration history; release-on-tag then reads the
           # bumped VERSION / seeded changelog section from the merged main.
-          gh pr merge --auto --squash "$PR_URL"
+          # --delete-branch removes the regen/ branch once the merge lands, so
+          # it doesn't linger after the release.
+          gh pr merge --auto --squash --delete-branch "$PR_URL"
           echo "Enabled auto-merge for $PR_URL"
