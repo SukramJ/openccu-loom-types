@@ -1,6 +1,6 @@
 # Version 0.1.26 (2026-06-22)
 
-- Feat: regenerate from openccu-loom v0.9.1 for daemon api 1.19.0. `DAEMON_API_VERSION` → 1.19.0 and `SCHEMA_DIGEST` refreshed; see the generated module diff for added/changed types.
+- Feat: regenerate for daemon api 1.19.0 — openccu-loom v0.9.1, which closes the post-`asks.md` north-bound wire gaps D1–D4 found during the `py-openccu-loom-client` integration. (The v0.9.0 auto-regeneration never landed: its `openapi.yaml` was missing the D1/D2/D3 schemas the daemon already emitted, so `gen_ws` could not resolve the broadcast payload; v0.9.1 completes the published contract and this release picks it up.) New WS payload `HubSystemUpdateChangedPayload` (`central`, `current_firmware`, `available_firmware`, `update_available`, `in_progress`) for the `hub.{central}.system_update` broadcast, re-exported from `ws.py` (**D1**). New optional `DataPointSummary.value_translations` (raw `value_list` entry → localised label, ENUM only) (**D2**). New optional `ChannelSummary.functions` (channel-level "Gewerk" labels, the twin of `DeviceSummary.functions`) (**D3**). New optional `SchemaField.default` (the config field's effective default) (**D4**). Pure additions; `DAEMON_API_VERSION` → 1.19.0 and `SCHEMA_DIGEST` refreshed.
 
 # Version 0.1.25 (2026-06-21)
 
