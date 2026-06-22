@@ -66,12 +66,38 @@ constants in `const.py` (written by `make generate` →
   major bumps remove or rename payload fields, scopes, or
   capabilities — see ADR-0020 in the daemon repo.
 
-Regeneration is automated: the daemon's release workflow fires a
-`repository_dispatch` (`daemon-release`) at this repo; the
-`regenerate-on-daemon-release` workflow checks out the daemon at the
-released tag, regenerates all modules, stamps the constants, bumps
-the patch version, and opens a PR. Manual fallback:
-`workflow_dispatch` with the tag, or the local two-step flow above.
+Regeneration and release are automated end to end. The daemon's
+release workflow fires a `repository_dispatch` (`daemon-release`) at
+this repo, which drives this chain:
+
+1. `regenerate-on-daemon-release` checks out the daemon at the released
+   tag, regenerates all modules, stamps the constants, bumps the
+   version, seeds a baseline changelog section, opens a PR from a
+   `regen/daemon-<tag>` branch, and enables auto-merge.
+2. `ci` runs on the PR: `Test` (the suite) and `Regen clean` (re-runs
+   `make generate` against the branch's daemon tag and fails on any
+   drift, so hand-edits to generated modules are caught).
+3. Once the required checks are green the PR squash-merges;
+   `tag-on-regen-merge` then pushes `v<version>`.
+4. The tag triggers `release-on-tag` → GitHub Release →
+   `python-publish` → PyPI.
+
+Manual fallback: `workflow_dispatch` with the tag, or the local
+two-step flow above.
+
+### CI / release setup
+
+The automation needs three one-time repository settings; without them
+the chain stops after step 1:
+
+- A **`RELEASE_PAT`** secret — a fine-grained PAT (or GitHub App token)
+  with `contents: write` + `pull-requests: write`. The regen PR and the
+  release tag are pushed with it, because a branch/PR/tag created via
+  the default `GITHUB_TOKEN` does **not** trigger the downstream CI and
+  release workflows (GitHub's recursive-workflow guard).
+- **Branch protection** on `main` requiring the `Test` and
+  `Regen clean` status checks — auto-merge waits on these.
+- **Allow auto-merge** enabled in the repository settings.
 
 ## What this package does NOT contain
 

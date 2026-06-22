@@ -5,7 +5,7 @@
 
 from typing import Final
 
-VERSION: Final = "0.1.27"
+VERSION: Final = "0.1.28"
 
 # Contract identity of the daemon build these types were generated
 # from. Stamped by scripts/stamp_const.py (run via `make generate`);

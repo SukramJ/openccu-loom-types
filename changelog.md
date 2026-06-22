@@ -1,3 +1,7 @@
+# Version 0.1.28 (2026-06-22)
+
+- CI: automate the regeneration release end to end. A new `ci.yml` runs the test suite on every PR (the `Test` status check) plus a `Regen clean` check that, for `regen/daemon-*` branches, re-runs `make generate` against the daemon tag encoded in the branch name and fails on any drift — catching hand-edits to the generated modules or the stamped `const.py` block. `regenerate-on-daemon-release.yml` now opens its PR under a PAT (so CI actually triggers) and enables auto-merge; once the checks are green the PR squash-merges, and the new `tag-on-regen-merge.yml` reads the bumped `VERSION` and pushes the `v<version>` tag, which drives the existing `release-on-tag.yml` → GitHub Release → PyPI publish. No package code changes — `DAEMON_API_VERSION` / `SCHEMA_DIGEST` are unchanged from 0.1.27. Requires a `RELEASE_PAT` secret and branch protection requiring the `Test` / `Regen clean` checks.
+
 # Version 0.1.27 (2026-06-22)
 
 - Feat: regenerate from openccu-loom v0.10.0 for daemon api 1.20.0. `DAEMON_API_VERSION` → 1.20.0 and `SCHEMA_DIGEST` refreshed; see the generated module diff for added/changed types.
