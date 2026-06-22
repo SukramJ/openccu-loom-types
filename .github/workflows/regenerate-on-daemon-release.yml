@@ -158,7 +158,7 @@ jobs:
           **Auto-merge is enabled**: once the CI check is green this PR squash-merges,
           which triggers tag-on-regen-merge → \`v${VERSION}\` → release + PyPI publish.
           To enrich the changelog or hold a breaking change, cancel auto-merge with
-          \`gh pr merge --disable-auto ${BRANCH}\` before CI finishes.")
+          \`gh pr merge --disable-auto ${BRANCH}\` before CI finishes.")"
 
           # Auto-merge once required status checks pass. Squash to keep main's
           # one-commit-per-regeneration history; release-on-tag then reads the
