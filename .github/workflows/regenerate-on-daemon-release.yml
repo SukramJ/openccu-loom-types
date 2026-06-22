@@ -39,8 +39,13 @@ jobs:
           fi
           echo "DAEMON_TAG=${TAG}" >> "$GITHUB_ENV"
 
+      # Checked out with the PAT so the regen branch is pushed under a real
+      # identity — a branch/PR created via GITHUB_TOKEN would NOT trigger the
+      # CI workflow, so the auto-merge would have no status check to wait on.
       - name: Checkout types repo
         uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.RELEASE_PAT }}
 
       - name: Checkout daemon at the released tag
         uses: actions/checkout@v6
@@ -89,9 +94,9 @@ jobs:
           print(f"{new} (breaking={breaking})")
           EOF
 
-      - name: Open regeneration PR
+      - name: Open regeneration PR and enable auto-merge
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
           BREAKING: ${{ github.event.client_payload.breaking || github.event.inputs.breaking || 'false' }}
         run: |
           set -euo pipefail
@@ -142,12 +147,21 @@ jobs:
           **The daemon flagged this contract change as BREAKING** — the minor version was bumped; review the module diff for removed/renamed fields before merging.
           "
           fi
-          gh pr create \
+          PR_URL="$(gh pr create \
             --title "Regenerate types from openccu-loom ${DAEMON_TAG}${TITLE_SUFFIX}" \
             --body "Automated regeneration from the daemon release \`${DAEMON_TAG}\`.
           ${BREAKING_NOTE}
           - generated modules: \`enums.py\`, \`rest.py\`, \`ws.py\`
           - \`const.py\`: schema digest + daemon api_version stamped, package version bumped to \`${VERSION}\`
-          - \`changelog.md\`: seeded a baseline \`# Version ${VERSION}\` section (release-on-tag needs it) — **enrich it before merging**
+          - \`changelog.md\`: seeded a baseline \`# Version ${VERSION}\` section (release-on-tag needs it)
 
-          Review the module diff and changelog entry, then merge and tag \`v${VERSION}\` to publish."
+          **Auto-merge is enabled**: once the CI check is green this PR squash-merges,
+          which triggers tag-on-regen-merge → \`v${VERSION}\` → release + PyPI publish.
+          To enrich the changelog or hold a breaking change, cancel auto-merge with
+          \`gh pr merge --disable-auto ${BRANCH}\` before CI finishes.")
+
+          # Auto-merge once required status checks pass. Squash to keep main's
+          # one-commit-per-regeneration history; release-on-tag then reads the
+          # bumped VERSION / seeded changelog section from the merged main.
+          gh pr merge --auto --squash "$PR_URL"
+          echo "Enabled auto-merge for $PR_URL"
