@@ -85,6 +85,25 @@ class ClientState(str, Enum):
     Stopped = "stopped"
     Stopping = "stopping"
 
+class ClimateMode(str, Enum):
+    Auto = "auto"
+    Cool = "cool"
+    Heat = "heat"
+    Off = "off"
+
+class ClimateProfile(str, Enum):
+    Away = "away"
+    Boost = "boost"
+    Comfort = "comfort"
+    Eco = "eco"
+    None_ = "none"
+    WeekProgram1 = "week_program_1"
+    WeekProgram2 = "week_program_2"
+    WeekProgram3 = "week_program_3"
+    WeekProgram4 = "week_program_4"
+    WeekProgram5 = "week_program_5"
+    WeekProgram6 = "week_program_6"
+
 class CommandRxMode(str, Enum):
     Burst = "BURST"
     LazyConfig = "LAZY_CONFIG"
@@ -214,6 +233,11 @@ class DeviceTriggerEventType(str, Enum):
     DeviceError = "homematic.device_error"
     Impulse = "homematic.impulse"
     Keypress = "homematic.keypress"
+
+class DeviceUpdateStatus(str, Enum):
+    Installing = "installing"
+    UpToDate = "up_to_date"
+    UpdateAvailable = "update_available"
 
 class FailureReason(str, Enum):
     Auth = "auth"
