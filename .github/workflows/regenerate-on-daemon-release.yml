@@ -65,14 +65,29 @@ jobs:
       - name: Regenerate modules + stamp contract identity
         run: make generate OPENCCU_LOOM_REPO=openccu-loom
 
-      # Patch bump for compatible regenerations; minor bump (patch
-      # reset) when the daemon flags the contract change as breaking —
-      # the breaking-ness then shows in the types version itself, and
-      # exact-pinning consumers (openccu-loom-client) see it in the diff.
-      - name: Bump package version
+      - name: Open regeneration PR and enable auto-merge
         env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
           BREAKING: ${{ github.event.client_payload.breaking || github.event.inputs.breaking || 'false' }}
         run: |
+          set -euo pipefail
+          # Guard BEFORE the version bump: `make generate` has stamped the schema
+          # digest + daemon api_version and regenerated the modules, so if nothing
+          # under openccu_loom_types/ changed, the daemon contract is identical to
+          # the last release — do nothing. An API-unchanged daemon release thus
+          # cuts no new types release (no bump, no PR, no tag, no PyPI publish).
+          if git diff --quiet -- openccu_loom_types/; then
+            echo "No generated-module changes for ${DAEMON_TAG} — nothing to do"
+            exit 0
+          fi
+
+          # Contract changed → bump the package version. Patch for compatible
+          # regenerations; minor bump (patch reset) when the daemon flags the
+          # change as breaking — the breaking-ness then shows in the types version
+          # itself, and exact-pinning consumers (openccu-loom-client) see it in
+          # the diff. The bump runs only here, after the guard, so VERSION never
+          # churns const.py for an unchanged contract (which would otherwise
+          # defeat the guard above and force a release every daemon release).
           python3 - <<'EOF'
           import os
           import re
@@ -94,16 +109,6 @@ jobs:
           print(f"{new} (breaking={breaking})")
           EOF
 
-      - name: Open regeneration PR and enable auto-merge
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
-          BREAKING: ${{ github.event.client_payload.breaking || github.event.inputs.breaking || 'false' }}
-        run: |
-          set -euo pipefail
-          if git diff --quiet -- openccu_loom_types/; then
-            echo "No generated-module changes for ${DAEMON_TAG} — nothing to do"
-            exit 0
-          fi
           VERSION="$(sed -nE 's/^VERSION: Final = "([^"]+)"$/\1/p' openccu_loom_types/const.py)"
           API_VERSION="$(sed -nE 's/^DAEMON_API_VERSION: Final = "([^"]+)"$/\1/p' openccu_loom_types/const.py)"
 
