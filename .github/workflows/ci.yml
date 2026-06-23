@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -69,11 +69,11 @@ jobs:
 
       - name: Checkout types repo
         if: steps.detect.outputs.is_regen == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Checkout daemon at the branch's tag
         if: steps.detect.outputs.is_regen == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: SukramJ/openccu-loom
           ref: ${{ steps.detect.outputs.tag }}

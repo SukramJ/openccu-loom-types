@@ -43,12 +43,12 @@ jobs:
       # identity — a branch/PR created via GITHUB_TOKEN would NOT trigger the
       # CI workflow, so the auto-merge would have no status check to wait on.
       - name: Checkout types repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           token: ${{ secrets.RELEASE_PAT }}
 
       - name: Checkout daemon at the released tag
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: SukramJ/openccu-loom
           ref: ${{ env.DAEMON_TAG }}
