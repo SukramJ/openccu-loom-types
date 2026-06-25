@@ -18,6 +18,12 @@ generate-enums: ## regenerate openccu_loom_types/enums.py from $(OPENCCU_LOOM_RE
 		--enums-json $(OPENCCU_LOOM_REPO)/assets/schemas/enums.json \
 		--out-py $(PKG)/enums.py
 
+# --disable-timestamp is REQUIRED for deterministic output: without it
+# datamodel-codegen stamps the current wall-clock time into the rest.py header,
+# so every regeneration diffs against the last release even when the daemon API
+# is byte-for-byte identical. That spurious diff defeats the
+# "skip release when API unchanged" guard in regenerate-on-daemon-release.yml
+# and forces a new types release for every daemon release.
 generate-rest: ## regenerate openccu_loom_types/rest.py via datamodel-codegen
 	@command -v datamodel-codegen >/dev/null 2>&1 || { \
 		echo "datamodel-codegen not on PATH — install via 'pip install -e .[dev]'"; exit 1; }
@@ -30,6 +36,7 @@ generate-rest: ## regenerate openccu_loom_types/rest.py via datamodel-codegen
 		--use-standard-collections \
 		--use-double-quotes \
 		--field-constraints \
+		--disable-timestamp \
 		--formatters ruff-format ruff-check
 
 generate-ws: ## regenerate openccu_loom_types/ws.py (envelope + push-payload re-exports from rest.py)
