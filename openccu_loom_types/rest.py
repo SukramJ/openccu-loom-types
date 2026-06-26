@@ -264,25 +264,54 @@ class UpdateStatus(StrEnum):
 
 class DeviceSummary(BaseModel):
     address: str
+    central: str | None = Field(
+        None,
+        description="CCU this device belongs to (multi-central grouping). Omitted\nfor backends that report no owning central.\n",
+    )
     interface: str
-    interface_id: str | None = None
+    interface_id: str
     ise_id: int | None = Field(
         None,
         description="CCU-internal numeric device id. Lets clients that address\ndevices by ISE_ID (e.g. the HA rename-by-ise_id path) map back\nto the device address. Absent when the backend reports none.\n",
     )
     model: str
+    model_label: str | None = Field(
+        None,
+        description="Localised, human-readable device-type label. Empty when no\ntranslation exists; consumers fall back to the raw `model`.\n",
+    )
+    model_icon: str | None = Field(
+        None, description="Icon identifier for the device model. Empty when none."
+    )
     sub_model: str | None = None
     name: str
     manufacturer: str | None = None
     product_group: str | None = None
     available: bool
     channels_count: int
-    updatable: bool | None = None
+    updatable: bool = Field(
+        ...,
+        description='Device *supports* firmware updates (CCU UPDATABLE capability) —\nNOT whether one is pending. Use update_available for the\n"update available" indicator.\n',
+    )
+    update_available: bool = Field(
+        ...,
+        description="An installable firmware update is actually pending: the gated\nlatest version differs from the installed one (image already\ndelivered for HmIP-RF / available for BidCos). A newer firmware\nthe CCU merely knows about but has not delivered does NOT set this.\n",
+    )
     update_status: UpdateStatus | None = Field(
         None,
         description="Daemon-derived firmware-update verdict collapsing the raw CCU\nfirmware phase and update_available signal, so a client renders\nthe update entity without carrying the phase-classification sets.\nOmitted when the device reports no firmware information.\n",
     )
     rooms: list[str] | None = None
+    functions: list[str] | None = Field(
+        None, description='Resolved "Gewerke" (function) labels for the device.'
+    )
+    master_pushes_config_pending: bool = Field(
+        ...,
+        description="True when the device's interface delivers reliable CONFIG_PENDING\nevents on MASTER writes (HmIP-RF, HmIP-Wired). The SPA then waits\nfor the true→false transition before refreshing MASTER. False for\nBidCos-*, VirtualDevices, CUxD — those rely on the save-path\nreload because CONFIG_PENDING never fires (or fires unreliably).\n",
+    )
+    has_sub_devices: bool = Field(
+        ...,
+        description="True when the device should be split into multiple logical\nsub-devices for northbound presentation. The SPA's CdpTilesPanel\nuses this flag to switch from a flat tile grid to per-group\nsections.\n",
+    )
 
 
 class DeviceList(BaseModel):
@@ -583,7 +612,10 @@ class ProgramSummary(BaseModel):
     id: str
     name: str
     description: str | None = None
-    active: bool | None = None
+    active: bool | None = Field(
+        None,
+        description="Program enabled state. Omitted when the CCU has not reported it\n(the Go DTO marshals the pointer with omitempty: absent, not null).\n",
+    )
     last_executed: str | None = Field(
         None, description="RFC3339 timestamp of the most recent execution."
     )
@@ -661,6 +693,10 @@ class Change(BaseModel):
 
 
 class AuditEntry(BaseModel):
+    central: str | None = Field(
+        None,
+        description="CCU this entry belongs to, derived best-effort from the device\naddress. Omitted for daemon-wide entries (e.g. CCU management).\n",
+    )
     timestamp: AwareDatetime = Field(
         ..., description="UTC time at which the change was recorded."
     )
@@ -695,10 +731,20 @@ class AuditEntry(BaseModel):
 
 
 class AlarmMessage(BaseModel):
+    central: str | None = Field(
+        None, description="CCU this alarm message belongs to (multi-central grouping)."
+    )
     id: str
     name: str
     description: str | None = None
     device_name: str | None = None
+    address: str | None = Field(
+        None,
+        description="CCU channel address that generated the alarm. Omitted when\nunavailable (legacy CCUs).\n",
+    )
+    state_value: str | None = Field(
+        None, description="Raw alarm state string from the CCU Rega script."
+    )
     timestamp: AwareDatetime
     counter: int
     last_trigger: str | None = None
@@ -706,14 +752,24 @@ class AlarmMessage(BaseModel):
 
 
 class ServiceMessage(BaseModel):
+    central: str | None = Field(
+        None,
+        description="CCU this service message belongs to (multi-central grouping).",
+    )
     id: str
     name: str
     address: str | None = None
     device_name: str | None = None
     type: str | None = None
+    description: str | None = Field(
+        None, description="Optional human-readable message text."
+    )
+    priority: int | None = Field(
+        None, description="Integer priority level (0 = normal)."
+    )
     timestamp: AwareDatetime
     counter: int
-    quittable: bool | None = None
+    quittable: bool
 
 
 class InstallModeInterfaceEntry(BaseModel):
@@ -1728,9 +1784,9 @@ class CalculatedDPDetail(CalculatedDPSummary):
 
 
 class DeviceDetail(DeviceSummary):
-    firmware: Firmware | None = None
-    availability: Availability | None = None
-    channels: list[ChannelSummary] | None = None
+    firmware: Firmware
+    availability: Availability
+    channels: list[ChannelSummary]
 
 
 class CentralRow(BaseModel):
