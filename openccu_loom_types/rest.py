@@ -748,6 +748,9 @@ class AlarmMessage(BaseModel):
     timestamp: AwareDatetime
     counter: int
     last_trigger: str | None = None
+    display_name: str | None = Field(
+        None, description="Human-readable translation of the message code."
+    )
     rooms: list[str] | None = None
 
 
@@ -770,6 +773,9 @@ class ServiceMessage(BaseModel):
     timestamp: AwareDatetime
     counter: int
     quittable: bool
+    display_name: str | None = Field(
+        None, description="Human-readable translation of the message code."
+    )
 
 
 class InstallModeInterfaceEntry(BaseModel):
