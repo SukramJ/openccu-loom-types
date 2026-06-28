@@ -1789,6 +1789,77 @@ class CalculatedDPDetail(CalculatedDPSummary):
     depends_on: list[str] | None = None
 
 
+class BackupEntry(BaseModel):
+    id: str
+    central: str
+    bytes: int
+    created_at: AwareDatetime
+
+
+class EditSessionResponse(BaseModel):
+    token: str
+    key: str
+    subject: str | None = None
+    expires: AwareDatetime
+
+
+class FunctionEntry(BaseModel):
+    name: str
+    device_count: int
+
+
+class Incident(BaseModel):
+    id: str
+    when: AwareDatetime
+    component: str
+    severity: str
+    summary: str
+    detail: str | None = None
+
+
+class InboxDevice(BaseModel):
+    central: str | None = Field(
+        None, description="CCU that reported this pending device."
+    )
+    address: str
+    model: str
+    serial: str | None = None
+    manufacturer: str | None = None
+    first_seen: int | None = None
+
+
+class LinkableChannel(BaseModel):
+    address: str
+    channel_type: str | None = None
+    channel_type_label: str | None = None
+    channel_name: str | None = None
+    device_address: str
+    device_name: str | None = None
+    device_model: str | None = None
+
+
+class LogRecord(BaseModel):
+    seq: int
+    time: AwareDatetime
+    level: str
+    logger: str | None = None
+    msg: str
+    attrs: dict[str, Any] | None = None
+
+
+class RPCRecordingStatus(BaseModel):
+    central: str
+    active: bool
+    entries: int
+    ends_at: str | None = None
+    randomize: bool | None = None
+
+
+class RoomEntry(BaseModel):
+    name: str
+    device_count: int
+
+
 class DeviceDetail(DeviceSummary):
     firmware: Firmware
     availability: Availability
