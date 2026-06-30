@@ -1872,6 +1872,10 @@ class CentralRow(BaseModel):
         description="Daemon-local identifier; must be unique. This is the\ncanonical central-scope discriminator: guaranteed equal to\n`SystemCCUEntry.name` and to the `central` field in\nWS / payload envelopes (`name == SystemCCUEntry.name ==\npayload.central`). Changing it re-scopes every per-central\nrequest, subscription and payload for this CCU.\n",
     )
     host: str = Field(..., description="CCU hostname or IP address.")
+    serial: str | None = Field(
+        None,
+        description='CCU hardware serial, set when the central is adopted from SSDP/UPnP discovery. Empty for YAML / manually-entered rows. Lets discovery mark a CCU "already configured" by serial regardless of its host.',
+    )
     port: int | None = Field(
         None,
         description="Legacy single-port override applied to all interfaces when ports map is absent.",
