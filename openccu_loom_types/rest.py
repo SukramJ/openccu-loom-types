@@ -589,6 +589,10 @@ class DataPointSummary(BaseModel):
         ...,
         description="Canonical loom-namespaced routing key for this data point —\nthe same value the WS `datapoint.value_changed` payload\ncarries. Lets a client build its entity registry from the\nsummary or snapshot without recomputing the key. Always present and non-empty: a central serves no entity until its CCU serial (the central-id slot of the key) is resolved by the bring-up readiness gate.\n",
     )
+    additional_information: dict[str, Any] | None = Field(
+        None,
+        description="Optional enriched model metadata for data points that provide\nit (e.g. the calculated operating-voltage sensor's battery\ntype / quantity / low-voltage limits). Absent for plain scalar\ndata points. Mirrors the optional `additional_information`\nobject on the per-DP MQTT state topic. Additive — existing\nresponses are unchanged.\n",
+    )
 
 
 class UIEventRequest(BaseModel):
@@ -603,6 +607,27 @@ class UIEventRequest(BaseModel):
 class SetValueRequest(BaseModel):
     value: Any
     priority: Priority | None = None
+
+
+class WebhookValueRequest(BaseModel):
+    central: str | None = Field(
+        None,
+        description="Optional CCU name. Device addresses are globally unique, so the\nwriter resolves the owning CCU from `address`; `central` is\ninformational.\n",
+    )
+    address: str = Field(..., description='Channel address, e.g. "0001D3C99C1234:1".')
+    parameter: str = Field(
+        ..., description='Wire parameter name, e.g. "STATE" or "LEVEL".'
+    )
+    value: Any
+    priority: Priority | None = None
+
+
+class WebhookProgramRequest(BaseModel):
+    central: str | None = Field(
+        None,
+        description="CCU name. Required when more than one CCU is configured, since\nprogram IDs are not unique across CCUs.\n",
+    )
+    program: str = Field(..., description="Program ID to run.")
 
 
 class ProgramSummary(BaseModel):
@@ -683,6 +708,67 @@ class HistoryBucket(BaseModel):
     max: float = Field(..., description="Maximum raw sample in this bucket.")
     count: int = Field(
         ..., description="Number of raw samples aggregated into this bucket."
+    )
+
+
+class EnergyBucket(BaseModel):
+    ts: AwareDatetime = Field(..., description="Start of the bucket's time span (UTC).")
+    consumed_wh: float = Field(
+        ...,
+        description="ENERGY_COUNTER delta over the bucket, in Wh. Never negative — see `reset`.\n",
+    )
+    feed_in_wh: float = Field(
+        ...,
+        description="ENERGY_COUNTER_FEED_IN delta over the bucket, in Wh. Never negative — see `reset`.\n",
+    )
+    avg_power_w: float = Field(
+        ..., description="Mean POWER sample over the bucket, in W."
+    )
+    peak_power_w: float = Field(
+        ..., description="Maximum POWER sample over the bucket, in W."
+    )
+    reset: bool = Field(
+        ...,
+        description="True when a cumulative counter went backwards within this bucket (meter reset on re-pair / firmware event); the reported delta is the counter's value at the end of the bucket (energy accumulated since the reset), not a negative delta.\n",
+    )
+
+
+class EnergyDevice(BaseModel):
+    address: str = Field(..., description="Bare device address.")
+    name: str = Field(
+        ..., description="Device display name (falls back to the address when unknown)."
+    )
+    buckets: list[EnergyBucket]
+    total_consumed_wh: float = Field(
+        ..., description="Sum of `consumed_wh` across every bucket, in Wh."
+    )
+    total_feed_in_wh: float = Field(
+        ..., description="Sum of `feed_in_wh` across every bucket, in Wh."
+    )
+
+
+class Group(StrEnum):
+    hour = "hour"
+    day = "day"
+    month = "month"
+
+
+class EnergyResponse(BaseModel):
+    group: Group = Field(..., description="Bucket granularity actually used.")
+    from_: AwareDatetime = Field(
+        ...,
+        alias="from",
+        description="Inclusive lower bound of the requested range (UTC).",
+    )
+    to: AwareDatetime = Field(
+        ..., description="Exclusive upper bound of the requested range (UTC)."
+    )
+    devices: list[EnergyDevice]
+    total_consumed_wh: float = Field(
+        ..., description="Sum of every device's `total_consumed_wh`, in Wh."
+    )
+    total_feed_in_wh: float = Field(
+        ..., description="Sum of every device's `total_feed_in_wh`, in Wh."
     )
 
 
