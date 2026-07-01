@@ -106,6 +106,15 @@ the chain stops after step 1:
 - Any business logic — types only.
 - Async helpers — types are framework-neutral.
 
+## Development
+
+Parts of openccu-loom-types are developed with agentic AI assistance,
+primarily [Claude Code](https://www.anthropic.com/claude-code).
+Submitted issues are likewise triaged and analysed with agentic help.
+Every change is still reviewed by a human maintainer and must pass the
+project's tests before it lands — the AI speeds up the work, it does
+not replace the review gate.
+
 ## License
 
 MIT. See [LICENSE](./LICENSE).
