@@ -211,6 +211,7 @@ class DeviceLifecycleSubtype(str, Enum):
     Updated = "UPDATED"
 
 class DeviceProfile(str, Enum):
+    IPAccessPermission = "IPAccessPermission"
     IPButtonLock = "IPButtonLock"
     IPIrrigationValve = "IPIrrigationValve"
     IPLock = "IPLock"
@@ -420,6 +421,7 @@ class OptionalSettings(str, Enum):
     OptionalSettingSRRecordSystemInit = "SR_RECORD_SYSTEM_INIT"
 
 class Parameter(str, Enum):
+    AccessAuthorization = "ACCESS_AUTHORIZATION"
     AcousticAlarmActive = "ACOUSTIC_ALARM_ACTIVE"
     AcousticAlarmSelection = "ACOUSTIC_ALARM_SELECTION"
     AcousticNotificationSelection = "ACOUSTIC_NOTIFICATION_SELECTION"

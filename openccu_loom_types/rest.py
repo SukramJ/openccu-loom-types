@@ -1616,6 +1616,11 @@ class TokenCreate(BaseModel):
         description='Logical owner of the token (e.g. "homeassistant", "ci-runner").',
     )
     role: Role4
+    expires_in_days: int | None = Field(
+        None,
+        description="Optional token lifetime in days. When set and positive, the token\nis rejected after this many days. Omitted or non-positive creates a\ntoken that never expires.\n",
+        ge=1,
+    )
 
 
 class TokenCreated(BaseModel):
@@ -1626,6 +1631,9 @@ class TokenCreated(BaseModel):
     fingerprint: str = Field(
         ...,
         description="Stable opaque identifier derived from the token (sha256-based).",
+    )
+    expires_at: AwareDatetime | None = Field(
+        None, description="Expiry instant. Absent when the token never expires."
     )
 
 
@@ -1638,6 +1646,9 @@ class TokenSummary(BaseModel):
     created_at: AwareDatetime
     last_seen_at: AwareDatetime | None = Field(
         None, description="Last successful authentication time. Absent when never used."
+    )
+    expires_at: AwareDatetime | None = Field(
+        None, description="Expiry instant. Absent when the token never expires."
     )
 
 
