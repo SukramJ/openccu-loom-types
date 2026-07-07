@@ -928,6 +928,36 @@ class ChannelLockRequest(BaseModel):
     )
 
 
+class MasterProfileSummary(BaseModel):
+    id: int
+    name: str = Field(..., description="Localised profile name.")
+    description: str = Field(..., description="Localised profile description.")
+    param_count: int = Field(
+        ..., description="Number of MASTER parameters this profile sets."
+    )
+
+
+class Params(BaseModel):
+    constraint_type: str | None = Field(
+        None, description='Usually "fixed"; other kinds appear sporadically.'
+    )
+    value: Any | None = None
+
+
+class MasterProfile(BaseModel):
+    id: int
+    name: dict[str, str] = Field(
+        ...,
+        description='Locale-keyed profile name (e.g. `{"en": "Eco", "de": "Eco"}`).',
+    )
+    description: dict[str, str] = Field(
+        ..., description="Locale-keyed profile description."
+    )
+    params: dict[str, Params] = Field(
+        ..., description="MASTER parameter name to constraint."
+    )
+
+
 class InterfaceState(BaseModel):
     id: str
     name: str
