@@ -179,6 +179,10 @@ class Info(BaseModel):
     version: str = Field(..., description="Daemon build version (semver).")
     commit: str
     build_date: str
+    addon_build: bool = Field(
+        ...,
+        description="True when this binary was built as the CCU/RaspberryMatic\nadd-on (it then runs on the CCU itself). False for the\nstandalone binary, Docker image, and HA add-on builds.\n",
+    )
     uptime: str
     started_at: AwareDatetime
     api_version: str = Field(
