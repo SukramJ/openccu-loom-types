@@ -660,6 +660,14 @@ class ProgramSummary(BaseModel):
         ...,
         description="Canonical loom routing key for this program — the same value\nthe WS `hub.program_executed` event carries. Lets clients\nbuild their entity registry from the summary without\nrecomputing the key. Always present and non-empty: a central serves no entity until its CCU serial (the central-id slot of the key) is resolved by the bring-up readiness gate.\n",
     )
+    channel: str | None = Field(
+        None,
+        description='Canonical channel address ("ADDR:idx") of the device channel\nthis program is associated with (resolved from a device\nidentifier in the program name). Absent when the program\nbelongs to no device — clients then attach the entity to the\ncentral hub device instead of a physical device.\n',
+    )
+    device_address: str | None = Field(
+        None,
+        description='Device part of `channel` (before the ":"). Clients use it to\ngroup the entity under the owning physical device; absent\ntogether with `channel` (entity belongs on the hub card).\n',
+    )
 
 
 class SysvarSummary(BaseModel):
@@ -698,6 +706,14 @@ class SysvarSummary(BaseModel):
     unique_id: str = Field(
         ...,
         description="Canonical loom routing key for this system variable — the\nsame value the WS `hub.sysvar_changed` event carries. Lets\nclients build their entity registry from the summary without\nrecomputing the key. Always present and non-empty: a central serves no entity until its CCU serial (the central-id slot of the key) is resolved by the bring-up readiness gate.\n",
+    )
+    channel: str | None = Field(
+        None,
+        description='Canonical channel address ("ADDR:idx") of the device channel\nthis system variable is associated with — either the explicit\nCCU WebUI channel assignment ("Kanalzuordnung") or, failing\nthat, a device identifier resolved from the variable name.\nAbsent when the variable belongs to no device — clients then\nattach the entity to the central hub device instead of a\nphysical device.\n',
+    )
+    device_address: str | None = Field(
+        None,
+        description='Device part of `channel` (before the ":"). Clients use it to\ngroup the entity under the owning physical device; absent\ntogether with `channel` (entity belongs on the hub card).\n',
     )
 
 
@@ -1335,6 +1351,14 @@ class SysvarChangedPayload(BaseModel):
     previous: Any | None = Field(
         None, description="Prior sysvar value; omitted when no prior value was tracked."
     )
+    channel: str | None = Field(
+        None,
+        description='Canonical channel address ("ADDR:idx") of the device channel\nthis sysvar is associated with (explicit CCU assignment or\nname match — the same value the REST SysvarSummary carries).\nOmitted when the sysvar belongs to no device.\n',
+    )
+    device_address: str | None = Field(
+        None,
+        description='Device part of `channel` (before the ":"); omitted together\nwith `channel`.\n',
+    )
 
 
 class ProgramExecutedPayload(BaseModel):
@@ -1347,6 +1371,14 @@ class ProgramExecutedPayload(BaseModel):
     unique_id: str | None = Field(
         None,
         description="Canonical loom-namespaced routing key\n(`loom_<serial10>_program_<hub-slug(name)>`) for this program.\nOptional — omitted when the program name cannot be resolved;\nsee DataPointValueChangedPayload.unique_id.\n",
+    )
+    channel: str | None = Field(
+        None,
+        description='Canonical channel address ("ADDR:idx") of the device channel\nthis program is associated with (name match — the same value\nthe REST ProgramSummary carries). Omitted when the program\nbelongs to no device or is not yet loaded in the hub model.\n',
+    )
+    device_address: str | None = Field(
+        None,
+        description='Device part of `channel` (before the ":"); omitted together\nwith `channel`.\n',
     )
 
 

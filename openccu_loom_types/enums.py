@@ -167,6 +167,7 @@ class DataPointType(str, Enum):
 class DataPointUsage(str, Enum):
     CDPPrimary = "ce_primary"
     CDPSecondary = "ce_secondary"
+    CDPState = "ce_state"
     CDPVisible = "ce_visible"
     DataPoint = "data_point"
     Event = "event"
