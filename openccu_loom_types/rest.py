@@ -229,6 +229,10 @@ class Component(BaseModel):
     name: str
     status: str
     note: str | None = None
+    note_key: str | None = Field(
+        None,
+        description="i18n catalogue key for the localized display of a static note; absent for interpolated notes (render note verbatim).",
+    )
     recorded_at: AwareDatetime
 
 
