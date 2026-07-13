@@ -202,6 +202,27 @@ class Info(BaseModel):
     )
 
 
+class Phase(StrEnum):
+    unknown = "unknown"
+    waiting_for_ccu = "waiting_for_ccu"
+    loading_hub = "loading_hub"
+    loading_devices = "loading_devices"
+    ready = "ready"
+
+
+class Readiness(BaseModel):
+    phase: Phase = Field(..., description="Current bring-up phase of the central.")
+    ready: bool = Field(
+        ..., description="True once the southbound bring-up has latched complete."
+    )
+    interfaces_loaded: int = Field(
+        ..., description="Number of interfaces wired so far during device loading."
+    )
+    interfaces_total: int = Field(
+        ..., description="Total number of configured interfaces to wire."
+    )
+
+
 class SystemCCUEntry(BaseModel):
     name: str = Field(
         ...,
@@ -216,6 +237,10 @@ class SystemCCUEntry(BaseModel):
     url: AnyUrl | None = None
     is_ha_app: bool
     configured_interfaces: list[str]
+    readiness: Readiness = Field(
+        ...,
+        description='Where the central is in its readiness-gated southbound\nbring-up, so the SPA can distinguish "still initializing"\nfrom "offline".\n',
+    )
 
 
 class Status(StrEnum):
@@ -1321,6 +1346,17 @@ class CentralStateChangedPayload(BaseModel):
     central: str
     old_state: str
     new_state: str
+
+
+class CentralReadinessChangedPayload(BaseModel):
+    central: str
+    phase: Phase
+    ready: bool = Field(
+        ...,
+        description="True only once southbound bring-up has latched complete (phase == ready).",
+    )
+    interfaces_loaded: int = Field(..., ge=0)
+    interfaces_total: int = Field(..., ge=0)
 
 
 class SystemStatusChangedPayload(BaseModel):

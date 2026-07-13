@@ -703,6 +703,13 @@ class RPCType(str, Enum):
     JSONRPC = "jsonrpc"
     XMLRPC = "xmlrpc"
 
+class ReadinessPhase(str, Enum):
+    ReadinessLoadingDevices = "loading_devices"
+    ReadinessLoadingHub = "loading_hub"
+    ReadinessReady = "ready"
+    ReadinessUnknown = "unknown"
+    ReadinessWaitingForCCU = "waiting_for_ccu"
+
 class RecoveryResult(str, Enum):
     Cancelled = "cancelled"
     Failed = "failed"
