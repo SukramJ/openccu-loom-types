@@ -22,6 +22,7 @@ from __future__ import annotations
 from openccu_loom_types.rest import (
     WsEnvelope,
     CentralStateChangedPayload,
+    CentralReadinessChangedPayload,
     CustomDataPointStateChangedPayload,
     DataPointValueChangedPayload,
     OptimisticRollbackPayload,
@@ -47,6 +48,7 @@ from openccu_loom_types.rest import (
 __all__ = [
     "WsEnvelope",
     "CentralStateChangedPayload",
+    "CentralReadinessChangedPayload",
     "CustomDataPointStateChangedPayload",
     "DataPointValueChangedPayload",
     "OptimisticRollbackPayload",
