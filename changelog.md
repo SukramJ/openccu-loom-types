@@ -1,3 +1,7 @@
+# Version 0.1.56 (2026-07-16)
+
+- Feat: regenerate from openccu-loom v0.42.0 for daemon api 2.22.0. `DAEMON_API_VERSION` → 2.22.0 and `SCHEMA_DIGEST` refreshed; see the generated module diff for added/changed types.
+
 # Version 0.1.55 (2026-07-13)
 
 - Feat: regenerate from openccu-loom v0.39.0 for daemon api 2.19.0. `DAEMON_API_VERSION` → 2.19.0 and `SCHEMA_DIGEST` refreshed; see the generated module diff for added/changed types.

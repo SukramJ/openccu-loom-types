@@ -16,6 +16,62 @@ from __future__ import annotations
 
 from enum import Enum
 
+class AlarmAreaState(str, Enum):
+    Armed = "armed"
+    Arming = "arming"
+    Disarmed = "disarmed"
+    Pending = "pending"
+    Triggered = "triggered"
+
+class AlarmBlockerPolicy(str, Enum):
+    Block = "block"
+    Ignore = "ignore"
+    Warn = "warn"
+
+class AlarmCentralLossPolicy(str, Enum):
+    AlarmCentralLossAlert = "alert"
+    AlarmCentralLossTrigger = "trigger"
+
+class AlarmJournalClass(str, Enum):
+    Arm = "arm"
+    Bypass = "bypass"
+    Config = "config"
+    Disarm = "disarm"
+    Fault = "fault"
+    Silence = "silence"
+    Test = "test"
+    Trigger = "trigger"
+
+class AlarmMode(str, Enum):
+    Custom = "custom"
+    Disarmed = "disarmed"
+    Full = "full"
+    Night = "night"
+    Perimeter = "perimeter"
+    Vacation = "vacation"
+
+class AlarmOutputClass(str, Enum):
+    AcousticSiren = "acoustic_siren"
+    AlarmLight = "alarm_light"
+    Chirp = "chirp"
+    Notification = "notification"
+    OpticalSiren = "optical_siren"
+    SmokeSounder = "smoke_sounder"
+    SwitchedSiren = "switched_siren"
+    SysvarMirror = "sysvar_mirror"
+
+class AlarmPostTriggerPolicy(str, Enum):
+    AlarmPostTriggerDisarm = "disarm"
+    AlarmPostTriggerReturnToArmed = "return_to_armed"
+
+class AlarmSensorType(str, Enum):
+    Door = "door"
+    Hazard = "hazard"
+    Motion = "motion"
+    Panic = "panic"
+    Tamper = "tamper"
+    Window = "window"
+
 class Backend(str, Enum):
     CCU = "CCU"
     Homegear = "Homegear"
@@ -118,6 +174,7 @@ class DataPointCategory(str, Enum):
     Action = "action"
     ActionNumber = "action_number"
     ActionSelect = "action_select"
+    AlarmControlPanel = "alarm_control_panel"
     BinarySensor = "binary_sensor"
     Button = "button"
     Climate = "climate"
@@ -148,6 +205,7 @@ class DataPointCategory(str, Enum):
     WeekProfile = "week_profile"
 
 class DataPointType(str, Enum):
+    AlarmControlPanel = "alarm_control_panel"
     BinarySensor = "binary_sensor"
     Button = "button"
     Climate = "climate"
@@ -434,6 +492,8 @@ class Parameter(str, Enum):
     AutoMode = "AUTO_MODE"
     AutoRelockState = "AUTO_RELOCK_STATE"
     BatteryState = "BATTERY_STATE"
+    BlockedPermanent = "BLOCKED_PERMANENT"
+    BlockedTemporary = "BLOCKED_TEMPORARY"
     BoostMode = "BOOST_MODE"
     BurstLimitWarning = "BURST_LIMIT_WARNING"
     ButtonLock = "BUTTON_LOCK"
@@ -441,6 +501,7 @@ class Parameter(str, Enum):
     ChannelLock = "CHANNEL_LOCK"
     ChannelOperationMode = "CHANNEL_OPERATION_MODE"
     CodeID = "CODE_ID"
+    CodeState = "CODE_STATE"
     Color = "COLOR"
     ColorBehaviour = "COLOR_BEHAVIOUR"
     ColorTemperature = "COLOR_TEMPERATURE"

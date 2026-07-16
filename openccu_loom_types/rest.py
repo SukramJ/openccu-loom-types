@@ -2,7 +2,7 @@
 #   filename:  openapi.yaml
 
 from __future__ import annotations
-from pydantic import AnyUrl, AwareDatetime, BaseModel, Field
+from pydantic import AnyUrl, AwareDatetime, BaseModel, ConfigDict, Field
 from typing import Any
 from enum import Enum, StrEnum
 
@@ -1470,6 +1470,180 @@ class HubSystemUpdateChangedPayload(BaseModel):
     in_progress: bool
 
 
+class OldState(StrEnum):
+    disarmed = "disarmed"
+    arming = "arming"
+    armed = "armed"
+    pending = "pending"
+    triggered = "triggered"
+
+
+class NewState(StrEnum):
+    disarmed = "disarmed"
+    arming = "arming"
+    armed = "armed"
+    pending = "pending"
+    triggered = "triggered"
+
+
+class Mode(StrEnum):
+    disarmed = "disarmed"
+    perimeter = "perimeter"
+    full = "full"
+    night = "night"
+    vacation = "vacation"
+    custom = "custom"
+
+
+class AlarmStateChangedPayload(BaseModel):
+    area_id: str
+    area_name: str
+    old_state: OldState
+    new_state: NewState
+    mode: Mode | None = Field(
+        None, description="Active (or, while arming, target) protection mode."
+    )
+    changed_by: str | None = Field(
+        None,
+        description='Attribution (operator account, keypad identity, code name, or an engine-internal actor such as "engine:restore"); omitted when unattributed.',
+    )
+    source: str | None = Field(
+        None,
+        description="Surface the action came from (rest, ws, mqtt, hmcli, keypad, engine).",
+    )
+    incident_id: int | None = Field(
+        None, description="References the active incident; omitted when none."
+    )
+
+
+class Kind2(StrEnum):
+    exit_delay = "exit_delay"
+    entry_delay = "entry_delay"
+
+
+class AlarmCountdownPayload(BaseModel):
+    area_id: str
+    kind: Kind2
+    remaining_s: int
+    total_s: int
+    remaining_ms: int = Field(
+        ..., description="Remaining time in milliseconds (source fidelity)."
+    )
+    total_ms: int = Field(..., description="Total countdown length in milliseconds.")
+
+
+class Mode1(StrEnum):
+    perimeter = "perimeter"
+    full = "full"
+    night = "night"
+    vacation = "vacation"
+    custom = "custom"
+
+
+class AlarmTriggeredPayload(BaseModel):
+    area_id: str
+    area_name: str
+    incident_id: int
+    sensor_id: str | None = Field(
+        None,
+        description="Triggering sensor id; omitted when the cause is not a sensor.",
+    )
+    sensor_name: str | None = None
+    cause: str = Field(
+        ...,
+        description="Stable machine-readable cause token (sensor, adopted, central_lost, restored).",
+    )
+    mode: Mode1 | None = Field(
+        None, description="Protection mode that was active at trigger time."
+    )
+
+
+class State(StrEnum):
+    disarmed = "disarmed"
+    arming = "arming"
+    pending = "pending"
+    triggered = "triggered"
+    armed_home = "armed_home"
+    armed_away = "armed_away"
+    armed_night = "armed_night"
+    armed_vacation = "armed_vacation"
+    armed_custom_bypass = "armed_custom_bypass"
+
+
+class AlarmPanelEntity(BaseModel):
+    unique_id: str
+    area_id: str
+    name: str
+    category: str
+    state: State
+    supported_modes: list[str] | None = None
+    available: bool
+    master: bool | None = None
+
+
+class AlarmPanelChangedPayload(BaseModel):
+    unique_id: str
+    area_id: str
+    name: str
+    state: str
+    available: bool
+    removed: bool | None = None
+
+
+class AlarmReminderPayload(BaseModel):
+    area_id: str
+    area_name: str | None = None
+    mode: str = Field(
+        ..., description="The protection mode the schedule expected the area to be in."
+    )
+
+
+class Class(StrEnum):
+    arm = "arm"
+    disarm = "disarm"
+    trigger = "trigger"
+    silence = "silence"
+    bypass = "bypass"
+    fault = "fault"
+    test = "test"
+    config = "config"
+
+
+class AlarmJournalAppendedPayload(BaseModel):
+    entry_id: int
+    area_id: str | None = Field(None, description="Omitted for engine-global entries.")
+    class_: Class = Field(..., alias="class")
+    event: str = Field(
+        ..., description="Stable machine-readable event token within the class."
+    )
+    actor: str | None = Field(
+        None, description="Attribution; omitted when unattributed."
+    )
+    incident_id: int | None = Field(
+        None, description="References the related incident; omitted when none."
+    )
+
+
+class AlarmWalkTestProgressPayload(BaseModel):
+    area_id: str
+    sensor_id: str
+    sensor_name: str | None = None
+    seen: int = Field(
+        ...,
+        description="Number of enrolled sensors that have reported an activation so far this session.",
+    )
+    total: int = Field(
+        ..., description="Total number of sensors enrolled in the walk-test session."
+    )
+
+
+class AlarmHealthChangedPayload(BaseModel):
+    healthy: bool
+    note: str = Field(
+        ..., description="Stable, English machine string describing the transition."
+    )
+
+
 class TriggeredEventSummary(BaseModel):
     parameter: str = Field(
         ..., description="Lowercased parameter name of the source that fired."
@@ -1630,7 +1804,7 @@ class MatterEndpointAssembledPayload(BaseModel):
     )
 
 
-class Class(StrEnum):
+class Class1(StrEnum):
     basic = "basic"
     expert = "expert"
     secret = "secret"
@@ -1640,7 +1814,7 @@ class SchemaField(BaseModel):
     path: str = Field(
         ..., description='Dot-separated field path, e.g. "north.rest.listen".'
     )
-    class_: Class = Field(
+    class_: Class1 = Field(
         ...,
         alias="class",
         description="Visibility class from the cfg struct tag. `basic` fields are\nshown in the default UI view; `expert` requires the expert\ntoggle; `secret` values are always redacted in responses.\n",
@@ -1887,14 +2061,14 @@ class SimpleScheduleEntry(BaseModel):
     permission: str | None = None
 
 
-class Kind2(StrEnum):
+class Kind3(StrEnum):
     climate = "climate"
     simple = "simple"
 
 
 class Schedule(BaseModel):
     channel: ScheduleChannelRef
-    kind: Kind2
+    kind: Kind3
     domain: str | None = None
     active_profile: str | None = None
     active_profile_index: int | None = None
@@ -2063,10 +2237,331 @@ class RoomEntry(BaseModel):
     device_count: int
 
 
+class AlarmAreaConfig(BaseModel):
+    model_config = ConfigDict(
+        extra="allow",
+    )
+
+
+class AlarmArea(BaseModel):
+    id: str
+    name: str
+    position: int | None = Field(
+        None, description="Display ordering hint for the SPA area list."
+    )
+    config: AlarmAreaConfig | None = None
+
+
+class Type1(StrEnum):
+    door = "door"
+    window = "window"
+    motion = "motion"
+    tamper = "tamper"
+    hazard = "hazard"
+    panic = "panic"
+
+
+class AlarmSensor(BaseModel):
+    id: str
+    central: str = Field(..., description="Owning CCU (central name).")
+    interface_id: str
+    channel_address: str
+    parameter: str
+    type: Type1 = Field(
+        ..., description="Sensor role; presets the mode matrix and behaviour flags."
+    )
+    name: str | None = None
+    config: dict[str, Any] | None = Field(
+        None,
+        description="Engine-owned per-sensor configuration document (mode matrix, entry-delay flag, bypass eligibility, …).",
+    )
+
+
+class Class2(StrEnum):
+    acoustic_siren = "acoustic_siren"
+    switched_siren = "switched_siren"
+    smoke_sounder = "smoke_sounder"
+    optical_siren = "optical_siren"
+    alarm_light = "alarm_light"
+    chirp = "chirp"
+    notification = "notification"
+    sysvar_mirror = "sysvar_mirror"
+
+
+class AlarmOutput(BaseModel):
+    id: str
+    class_: Class2 = Field(
+        ...,
+        alias="class",
+        description="Output driver class. The class, not the backing device type, decides which safety invariants apply.",
+    )
+    central: str = Field(..., description="Owning CCU (central name).")
+    channel_address: str
+    name: str | None = None
+    config: dict[str, Any] | None = Field(
+        None,
+        description="Engine-owned per-output configuration document (per-mode assignment, indoor/outdoor flag, duration/tone, …).",
+    )
+
+
+class AlarmModeReadiness(BaseModel):
+    ready: bool = Field(
+        ..., description="True when the mode can be armed without `force`."
+    )
+    blockers: list[str] | None = Field(
+        None, description="Sensor ids currently blocking the arm into this mode."
+    )
+    warnings: list[str] | None = Field(
+        None, description="Sensor ids with non-blocking health warnings for this mode."
+    )
+
+
+class State1(StrEnum):
+    disarmed = "disarmed"
+    arming = "arming"
+    armed = "armed"
+    pending = "pending"
+    triggered = "triggered"
+
+
+class Mode2(StrEnum):
+    disarmed = "disarmed"
+    perimeter = "perimeter"
+    full = "full"
+    night = "night"
+    vacation = "vacation"
+    custom = "custom"
+
+
+class Incident1(BaseModel):
+    id: str | None = None
+    silenced: bool | None = None
+
+
+class Kind4(StrEnum):
+    exit_delay = "exit_delay"
+    entry_delay = "entry_delay"
+
+
+class Countdown(BaseModel):
+    kind: Kind4 | None = None
+    remaining_s: int | None = None
+    total_s: int | None = None
+
+
+class AlarmAreaStatus(BaseModel):
+    id: str
+    name: str
+    state: State1 = Field(
+        ..., description="Arm-state-machine state (docs/alarm-concept.md §5)."
+    )
+    mode: Mode2 | None = Field(
+        None, description="Currently active (or, while arming, target) protection mode."
+    )
+    bypassed: list[str] | None = Field(
+        None, description="Sensor ids currently bypassed for the active/pending arm."
+    )
+    incident: Incident1 | None = Field(
+        None,
+        description="The area's open incident, present only while `state` is `triggered`.",
+    )
+    countdown: Countdown | None = Field(
+        None,
+        description="A running exit/entry delay countdown, present only while one is active.",
+    )
+    readiness: dict[str, AlarmModeReadiness] | None = Field(
+        None, description="Per-mode arming readiness, keyed by mode name."
+    )
+    walktest_active: bool = Field(
+        ..., description="True while a walk-test session is running on this area."
+    )
+
+
+class Mode3(StrEnum):
+    perimeter = "perimeter"
+    full = "full"
+    night = "night"
+    vacation = "vacation"
+    custom = "custom"
+
+
+class AlarmArmRequest(BaseModel):
+    mode: Mode3 = Field(..., description="Target protection mode.")
+    force: bool | None = Field(
+        None,
+        description="Arm despite readiness blockers, where the engine's blocker policy allows overriding.",
+    )
+    skip_delay: bool | None = Field(
+        None, description="Skip the configured exit delay and arm immediately."
+    )
+    bypass: list[str] | None = Field(
+        None, description="Sensor ids to bypass for this arm attempt."
+    )
+    code: str | None = Field(
+        None,
+        description="Alarm code supplied with the arm, when the area's code policy requires one (or to surface a duress code). Never logged or persisted in cleartext.\n",
+    )
+
+
+class AlarmVerbRequest(BaseModel):
+    code: str | None = Field(
+        None,
+        description="Alarm code for the verb, when the area's code policy requires one. Never logged or persisted in cleartext.\n",
+    )
+
+
+class AlarmCodePerms(BaseModel):
+    arm: bool
+    disarm: bool
+    silence: bool
+
+
+class Kind5(StrEnum):
+    pin = "pin"
+    keypad_slot = "keypad_slot"
+    remote_key = "remote_key"
+
+
+class AlarmCode(BaseModel):
+    id: str
+    name: str
+    kind: Kind5 = Field(..., description="Code class.")
+    duress: bool | None = Field(
+        None,
+        description="A PIN that disarms normally but fires a silent duress alarm. Only meaningful for the pin kind.\n",
+    )
+    perms: AlarmCodePerms
+    areas: list[str] | None = Field(
+        None, description="Restrict to these area ids; empty means every area."
+    )
+    binding: Any | None = Field(
+        None,
+        description="Engine-owned hardware-binding document for the keypad_slot / remote_key kinds; absent for pin codes.\n",
+    )
+    valid_from_ms: int | None = Field(
+        None, description="Optional validity-window start (Unix ms); 0 leaves it open."
+    )
+    valid_until_ms: int | None = Field(
+        None, description="Optional validity-window end (Unix ms); 0 leaves it open."
+    )
+    enabled: bool
+    created_ms: int | None = None
+    updated_ms: int | None = None
+
+
+class AlarmCodeRequest(BaseModel):
+    name: str
+    kind: Kind5
+    pin: str | None = Field(
+        None,
+        description="Cleartext code, write-only, for the pin kind. Omitted on update to keep the existing hash.\n",
+    )
+    duress: bool | None = None
+    perms: AlarmCodePerms
+    areas: list[str] | None = None
+    binding: Any | None = Field(
+        None,
+        description="Engine-owned hardware-binding document (keypad_slot / remote_key).",
+    )
+    valid_from_ms: int | None = None
+    valid_until_ms: int | None = None
+    enabled: bool
+
+
+class State2(StrEnum):
+    arming = "arming"
+    armed = "armed"
+
+
+class AlarmArmAccepted(BaseModel):
+    state: State2 = Field(..., description="Resulting area state.")
+    bypassed: list[str] | None = Field(
+        None, description="Sensor ids actually bypassed for this arm."
+    )
+    exit_delay_s: int | None = Field(
+        None,
+        description="Exit delay in seconds the area is now counting down; 0 when armed immediately.",
+    )
+
+
+class Class3(StrEnum):
+    arm = "arm"
+    disarm = "disarm"
+    trigger = "trigger"
+    silence = "silence"
+    bypass = "bypass"
+    fault = "fault"
+    test = "test"
+    config = "config"
+
+
+class AlarmJournalEntry(BaseModel):
+    id: int
+    when: AwareDatetime
+    area_id: str
+    class_: Class3 = Field(
+        ...,
+        alias="class",
+        description="Journal bucket used by the `class` query filter.",
+    )
+    event: str = Field(
+        ...,
+        description='Stable machine-readable event token within the class (e.g. "armed", "force_armed", "silenced").',
+    )
+    actor: str | None = Field(
+        None,
+        description="Identity that caused the entry (operator account, keypad identity, code name, or an engine-internal actor); empty when unattributed.",
+    )
+    source: str | None = Field(
+        None,
+        description="Surface the action came from (rest, ws, mqtt, hmcli, keypad, engine).",
+    )
+    incident_id: int | None = Field(
+        None,
+        description="Linked incident id, present when the entry belongs to a trigger episode.",
+    )
+    details: dict[str, Any] | None = Field(
+        None, description="Engine-owned, event-class-specific detail document."
+    )
+
+
+class Sensor(BaseModel):
+    id: str
+    name: str | None = None
+    tested: bool = Field(
+        ...,
+        description="True once this sensor reported at least one activation during the current session.",
+    )
+    last_triggered_at: AwareDatetime | None = None
+
+
+class AlarmWalkTestStatus(BaseModel):
+    active: bool
+    started_at: AwareDatetime | None = None
+    sensors: list[Sensor] = Field(
+        ...,
+        description="One row per sensor enrolled in the area, tracking walk-test coverage.",
+    )
+
+
+class AlarmOutputTestRequest(BaseModel):
+    optical_only: bool | None = Field(
+        None,
+        description="Fire only the output's optical/visual indication, suppressing sound. Ignored for outputs with no audible element.",
+    )
+
+
 class DeviceDetail(DeviceSummary):
     firmware: Firmware
     availability: Availability
     channels: list[ChannelSummary]
+
+
+class AlarmReadinessChangedPayload(BaseModel):
+    area_id: str
+    readiness: dict[str, AlarmModeReadiness] = Field(
+        ..., description="Per-mode arming readiness, keyed by mode name."
+    )
 
 
 class CentralRow(BaseModel):

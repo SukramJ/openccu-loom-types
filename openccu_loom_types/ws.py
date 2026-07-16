@@ -43,6 +43,15 @@ from openccu_loom_types.rest import (
     MatterFabric,
     MatterFabricRemovedPayload,
     MatterEndpointAssembledPayload,
+    AlarmStateChangedPayload,
+    AlarmCountdownPayload,
+    AlarmReadinessChangedPayload,
+    AlarmTriggeredPayload,
+    AlarmJournalAppendedPayload,
+    AlarmWalkTestProgressPayload,
+    AlarmHealthChangedPayload,
+    AlarmPanelChangedPayload,
+    AlarmReminderPayload,
 )
 
 __all__ = [
@@ -69,4 +78,13 @@ __all__ = [
     "MatterFabric",
     "MatterFabricRemovedPayload",
     "MatterEndpointAssembledPayload",
+    "AlarmStateChangedPayload",
+    "AlarmCountdownPayload",
+    "AlarmReadinessChangedPayload",
+    "AlarmTriggeredPayload",
+    "AlarmJournalAppendedPayload",
+    "AlarmWalkTestProgressPayload",
+    "AlarmHealthChangedPayload",
+    "AlarmPanelChangedPayload",
+    "AlarmReminderPayload",
 ]
