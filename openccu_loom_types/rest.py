@@ -198,7 +198,7 @@ class Info(BaseModel):
     )
     capabilities: list[str] = Field(
         ...,
-        description="Runtime feature set. Always-on entries:\n`rest.v1`, `ws.broadcasts.v1`, `errors.problem_details.v1`.\nConditional entries surface only when configured:\n`mqtt.discovery.v1`, `matter.bridge.v1`, `auth.oidc.v1`.\n\nOpen-ended on purpose: the daemon may advertise additional\ncapabilities (e.g. `system.restart.supervised.v1`, `mcp.v1`)\nas features are added. Clients MUST treat this as a forward-\ncompatible string set and ignore values they do not recognise\n— never reject an `Info` payload because of an unknown entry.\n",
+        description="Runtime feature set. Always-on entries:\n`rest.v1`, `ws.broadcasts.v1`, `errors.problem_details.v1`.\nConditional entries surface only when configured:\n`mqtt.discovery.v1`, `matter.bridge.v1`, `auth.oidc.v1`,\n`alarm.v1` (the `/alarm` surface is mounted — absent, the\nalarm subsystem is off and every `/alarm` route answers 404).\n\nOpen-ended on purpose: the daemon may advertise additional\ncapabilities (e.g. `system.restart.supervised.v1`, `mcp.v1`)\nas features are added. Clients MUST treat this as a forward-\ncompatible string set and ignore values they do not recognise\n— never reject an `Info` payload because of an unknown entry.\n",
     )
 
 
@@ -1579,6 +1579,14 @@ class AlarmPanelEntity(BaseModel):
     supported_modes: list[str] | None = None
     available: bool
     master: bool | None = None
+    code_arm_required: bool = Field(
+        ...,
+        description="Effective per-area code requirement for arming: the area's\ncode policy AND an applicable enabled pin code exists —\nexactly the requirement the daemon enforces, so a client\nprompts for a code precisely when one is needed. The master\naggregate carries `true` when any member area requires one.\n",
+    )
+    code_disarm_required: bool = Field(
+        ...,
+        description="Effective per-area code requirement for disarming; same\nderivation and master aggregation as `code_arm_required`.\n",
+    )
 
 
 class AlarmPanelChangedPayload(BaseModel):
@@ -1587,6 +1595,8 @@ class AlarmPanelChangedPayload(BaseModel):
     name: str
     state: str
     available: bool
+    code_arm_required: bool
+    code_disarm_required: bool
     removed: bool | None = None
 
 
