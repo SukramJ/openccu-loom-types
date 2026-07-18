@@ -5,7 +5,7 @@
 
 from typing import Final
 
-VERSION: Final = "0.1.58"
+VERSION: Final = "0.1.59"
 
 # Contract identity of the daemon build these types were generated
 # from. Stamped by scripts/stamp_const.py (run via `make generate`);
@@ -14,5 +14,5 @@ VERSION: Final = "0.1.58"
 # types match the daemon build exactly; inequality means they were
 # generated from a different build — fall back to DAEMON_API_VERSION
 # vs `api_version` for compatibility reasoning.
-SCHEMA_DIGEST: Final = "sha256:cba539d635d4d3329b4f79a17761b5ddf440afdd1a621b0c9711f877cb38399c"
-DAEMON_API_VERSION: Final = "2.24.0"
+SCHEMA_DIGEST: Final = "sha256:1d708389a6dd8ddeb6df48c4538137a5213a46a340e3de09340a1b81a90ef33e"
+DAEMON_API_VERSION: Final = "2.25.0"
