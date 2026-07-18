@@ -1532,6 +1532,15 @@ class AlarmCountdownPayload(BaseModel):
     total_ms: int = Field(..., description="Total countdown length in milliseconds.")
 
 
+class AlarmNotificationPayload(BaseModel):
+    area_id: str
+    area_name: str | None = None
+    output_id: str
+    output_name: str | None = None
+    incident_id: int
+    mode: str | None = None
+
+
 class Mode1(StrEnum):
     perimeter = "perimeter"
     full = "full"
