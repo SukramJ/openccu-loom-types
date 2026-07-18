@@ -2314,6 +2314,64 @@ class AlarmOutput(BaseModel):
     )
 
 
+class Class3(StrEnum):
+    acoustic_siren = "acoustic_siren"
+    optical_siren = "optical_siren"
+    switched_siren = "switched_siren"
+    smoke_sounder = "smoke_sounder"
+    alarm_light = "alarm_light"
+    chirp = "chirp"
+
+
+class AlarmOutputCandidate(BaseModel):
+    central: str = Field(..., description="Owning CCU (central name).")
+    device_address: str
+    device_name: str | None = None
+    model: str
+    channel_address: str
+    channel_no: int
+    channel_name: str | None = None
+    classes: list[Class3] = Field(
+        ...,
+        description="Device-backed output classes this channel can carry, in canonical class order. The switched_siren class requires device-side auto-off (ON_TIME) and is only listed when the channel supports it.",
+    )
+    kind: str = Field(
+        ..., description="Stable custom-DP kind string (widget selection)."
+    )
+    available_tones: list[str] | None = Field(
+        None, description="Acoustic tone labels the siren offers (sirens only)."
+    )
+    available_lights: list[str] | None = Field(
+        None, description="Optical pattern labels the siren offers (sirens only)."
+    )
+    available_soundfiles: list[str] | None = Field(
+        None,
+        description="Soundfile labels an MP3 player offers for the chirp class (e.g. SOUNDFILE_001).",
+    )
+    dimmable: bool | None = Field(
+        None, description="Level support for the alarm_light class."
+    )
+
+
+class Parameter(StrEnum):
+    PRESS_SHORT = "PRESS_SHORT"
+    PRESS_LONG = "PRESS_LONG"
+
+
+class AlarmRemoteKeyCandidate(BaseModel):
+    central: str = Field(..., description="Owning CCU (central name).")
+    device_address: str
+    device_name: str | None = None
+    model: str
+    channel_address: str
+    channel_no: int
+    channel_name: str | None = None
+    parameters: list[Parameter] = Field(
+        ...,
+        description="Press parameters this key offers, in dispatch order (PRESS_SHORT before PRESS_LONG).",
+    )
+
+
 class AlarmModeReadiness(BaseModel):
     ready: bool = Field(
         ..., description="True when the mode can be armed without `force`."
@@ -2494,7 +2552,7 @@ class AlarmArmAccepted(BaseModel):
     )
 
 
-class Class3(StrEnum):
+class Class4(StrEnum):
     arm = "arm"
     disarm = "disarm"
     trigger = "trigger"
@@ -2509,7 +2567,7 @@ class AlarmJournalEntry(BaseModel):
     id: int
     when: AwareDatetime
     area_id: str
-    class_: Class3 = Field(
+    class_: Class4 = Field(
         ...,
         alias="class",
         description="Journal bucket used by the `class` query filter.",
