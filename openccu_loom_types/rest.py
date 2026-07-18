@@ -2348,14 +2348,27 @@ class AlarmOutputCandidate(BaseModel):
         ..., description="Stable custom-DP kind string (widget selection)."
     )
     available_tones: list[str] | None = Field(
-        None, description="Acoustic tone labels the siren offers (sirens only)."
+        None,
+        description="Raw acoustic tone wire values the siren offers (sirens only).",
+    )
+    available_tone_labels: list[str] | None = Field(
+        None,
+        description="Localised display labels for available_tones, same order. Absent when the server has no value translations.",
     )
     available_lights: list[str] | None = Field(
-        None, description="Optical pattern labels the siren offers (sirens only)."
+        None,
+        description="Raw optical pattern wire values the siren offers (sirens only).",
+    )
+    available_light_labels: list[str] | None = Field(
+        None, description="Localised display labels for available_lights, same order."
     )
     available_soundfiles: list[str] | None = Field(
         None,
-        description="Soundfile labels an MP3 player offers for the chirp class (e.g. SOUNDFILE_001).",
+        description="Raw soundfile wire values an MP3 player offers for the chirp class (e.g. SOUNDFILE_001).",
+    )
+    available_soundfile_labels: list[str] | None = Field(
+        None,
+        description="Localised display labels for available_soundfiles, same order.",
     )
     dimmable: bool | None = Field(
         None, description="Level support for the alarm_light class."
