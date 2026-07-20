@@ -100,6 +100,14 @@ class CustomDPSummary(BaseModel):
         ...,
         description="Canonical loom routing key for this Custom-DP — the same\nvalue the WS `custom_data_point.state_changed` payload\ncarries. Lets a client build its entity registry from the\nsummary without recomputing the key. Always present and non-empty: a central serves no entity until its CCU serial (the central-id slot of the key) is resolved by the bring-up readiness gate.\n",
     )
+    translated_name: str | None = Field(
+        None,
+        description="Channel-level entity display name, fully composed by the\ndaemon: a custom channel name verbatim, the `ch<no>` /\n`vch<no>` channel-group marker for derived names, or the\nlocale-aware postfix label (button locks). Device-name\nprefix stripped; empty when the name collapses to the\ndevice name alone. Consumers render it verbatim — the\ndaemon is the single naming authority.\n",
+    )
+    parameter_name: str | None = Field(
+        None,
+        description="Untranslated marker / postfix portion of the entity name\n(`ch6`, `vch5`, `Button Lock`); empty when the entity is\nnamed after the channel or device alone. Mirrors the\nreference schema's `DataPointNameData.parameter_name`.\n",
+    )
 
 
 class Type(Enum):
@@ -585,11 +593,11 @@ class DataPointSummary(BaseModel):
     )
     translated_name: str | None = Field(
         None,
-        description="Locale-aware per-entity name a north-bound consumer (HA via\nMQTT discovery or the REST drop-in) assigns to this data\npoint. Identical to the MQTT discovery `name` field — both\nresolve through the same naming primitive. The parameter\nportion only; HA prepends the device name. Empty when\n`label_omitted` is true.\n",
+        description="Locale-aware per-entity name a north-bound consumer (HA via\nMQTT discovery or the REST drop-in) assigns to this data\npoint, resolved through the same naming primitives as the\nMQTT discovery `name` field. The parameter portion only; HA\nprepends the device name. When `label_omitted` is true it\ninstead carries the channel-level collapsed name (channel\nname plus multi-channel `chN` marker, device prefix\nstripped) — possibly empty when the collapse reduces to the\ndevice name alone. Consumers therefore never need to\ncompose entity names themselves; the daemon is the single\nnaming authority.\n",
     )
     label_omitted: bool | None = Field(
         None,
-        description='True when the parameter is flagged "primary" in the embedded\ntranslation_custom catalogue (translation key present, value\nempty). Consumers then collapse the entity name to the device\nname alone (MQTT discovery emits `name: null`).\n',
+        description='True when the parameter is flagged "primary" in the embedded\ntranslation_custom catalogue (translation key present, value\nempty). The entity is then named after the channel:\n`translated_name` holds the collapsed channel-level name,\nfalling back to the device name when empty (MQTT discovery\ninstead emits `name: null`).\n',
     )
     control: str | None = Field(
         None,
