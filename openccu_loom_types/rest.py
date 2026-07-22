@@ -210,6 +210,11 @@ class Info(BaseModel):
     )
 
 
+class GroupMemberEntry(BaseModel):
+    address: str = Field(..., description="Member device or channel address.")
+    type_id: str | None = Field(None, description="Member-type key.")
+
+
 class Phase(StrEnum):
     unknown = "unknown"
     waiting_for_ccu = "waiting_for_ccu"
@@ -303,63 +308,25 @@ class UpdateStatus(StrEnum):
     installing = "installing"
 
 
-class DeviceSummary(BaseModel):
-    address: str
-    central: str | None = Field(
+class RxMode(BaseModel):
+    always: bool | None = Field(
         None,
-        description="CCU this device belongs to (multi-central grouping). Omitted\nfor backends that report no owning central.\n",
+        description="Mains-powered, permanently reachable (RX_ALWAYS); applies configuration immediately.",
     )
-    interface: str
-    interface_id: str
-    ise_id: int | None = Field(
+    burst: bool | None = Field(
+        None, description="Reachable via burst wakeup (RX_BURST)."
+    )
+    config: bool | None = Field(
+        None, description="Reachable in its configuration window (RX_CONFIG)."
+    )
+    wakeup: bool | None = Field(
         None,
-        description="CCU-internal numeric device id. Lets clients that address\ndevices by ISE_ID (e.g. the HA rename-by-ise_id path) map back\nto the device address. Absent when the backend reports none.\n",
+        description="Battery device that only accepts pending configuration on its next wakeup (RX_WAKEUP).",
     )
-    model: str
-    model_label: str | None = Field(
+    lazy_config: bool | None = Field(
         None,
-        description="Localised, human-readable device-type label. Empty when no\ntranslation exists; consumers fall back to the raw `model`.\n",
+        description="Battery device whose configuration transfer is deferred until its next wakeup (RX_LAZY_CONFIG).",
     )
-    model_icon: str | None = Field(
-        None, description="Icon identifier for the device model. Empty when none."
-    )
-    sub_model: str | None = None
-    name: str
-    manufacturer: str | None = None
-    product_group: str | None = None
-    available: bool
-    channels_count: int
-    updatable: bool = Field(
-        ...,
-        description='Device *supports* firmware updates (CCU UPDATABLE capability) —\nNOT whether one is pending. Use update_available for the\n"update available" indicator.\n',
-    )
-    update_available: bool = Field(
-        ...,
-        description="An installable firmware update is actually pending: the gated\nlatest version differs from the installed one (image already\ndelivered for HmIP-RF / available for BidCos). A newer firmware\nthe CCU merely knows about but has not delivered does NOT set this.\n",
-    )
-    update_status: UpdateStatus | None = Field(
-        None,
-        description="Daemon-derived firmware-update verdict collapsing the raw CCU\nfirmware phase and update_available signal, so a client renders\nthe update entity without carrying the phase-classification sets.\nOmitted when the device reports no firmware information.\n",
-    )
-    rooms: list[str] | None = None
-    functions: list[str] | None = Field(
-        None, description='Resolved "Gewerke" (function) labels for the device.'
-    )
-    master_pushes_config_pending: bool = Field(
-        ...,
-        description="True when the device's interface delivers reliable CONFIG_PENDING\nevents on MASTER writes (HmIP-RF, HmIP-Wired). The SPA then waits\nfor the true→false transition before refreshing MASTER. False for\nBidCos-*, VirtualDevices, CUxD — those rely on the save-path\nreload because CONFIG_PENDING never fires (or fires unreliably).\n",
-    )
-    has_sub_devices: bool = Field(
-        ...,
-        description="True when the device should be split into multiple logical\nsub-devices for northbound presentation. The SPA's CdpTilesPanel\nuses this flag to switch from a flat tile grid to per-group\nsections.\n",
-    )
-
-
-class DeviceList(BaseModel):
-    items: list[DeviceSummary]
-    page: int
-    per_page: int
-    total: int
 
 
 class Firmware(BaseModel):
@@ -685,6 +652,14 @@ class ProgramSummary(BaseModel):
     last_executed: str | None = Field(
         None, description="RFC3339 timestamp of the most recent execution."
     )
+    condition_summary: str | None = Field(
+        None,
+        description="Compact, language-neutral rendering of the program's root-rule\ntrigger conditions — object names from the ReGa DOM joined by\nsymbolic operators (==, >=, <=, >, <, &&, ||). Capped at ~200\ncharacters with an ellipsis. Absent when the program has no rule\nor the CCU-side scan produced nothing.\n",
+    )
+    activity_summary: str | None = Field(
+        None,
+        description='Compact, language-neutral rendering of the program\'s root-rule\nactivities (object name := value, joined by "; "). Capped at\n~200 characters with an ellipsis. Absent when the program has no\nrule.\n',
+    )
     is_internal: bool | None = Field(
         None,
         description="True for CCU-internal helper programs (prgEnergyCounter_…,\nTmp_…). Clients skip these for HA entities, mirroring\naiohomematic's DEFAULT_INCLUDE_INTERNAL_PROGRAMS=false.\n",
@@ -704,6 +679,20 @@ class ProgramSummary(BaseModel):
     device_address: str | None = Field(
         None,
         description='Device part of `channel` (before the ":"). Clients use it to\ngroup the entity under the owning physical device; absent\ntogether with `channel` (entity belongs on the hub card).\n',
+    )
+
+
+class ProgramExecuteRequest(BaseModel):
+    check_conditions: bool | None = Field(
+        False,
+        description='When true, the CCU evaluates the program\'s "if" condition and\nruns the program only when the condition is currently\nsatisfied. When false (the default) the program runs\nunconditionally.\n',
+    )
+
+
+class ProgramExecuteResponse(BaseModel):
+    executed: bool = Field(
+        ...,
+        description="Whether the program actually ran. Always true for an\nunconditional execution (check_conditions=false); false for a\ncondition-checked execution whose condition was not met.\n",
     )
 
 
@@ -727,6 +716,22 @@ class SysvarSummary(BaseModel):
     is_internal: bool | None = Field(
         None,
         description="Mirrors the CCU's isInternal flag. Internal variables back\nCCU bookkeeping; clients skip them for HA entities unless\nopted in (aiohomematic's INTERNAL description marker).\n",
+    )
+    is_visible: bool | None = Field(
+        None,
+        description="Mirrors the CCU's isVisible flag — whether the variable is\nshown in the CCU WebUI. Always present (a real CCU reports it\nfor every variable).\n",
+    )
+    is_logged: bool | None = Field(
+        None,
+        description="Mirrors the CCU's isLogged flag (backed by the CCU-side\nDPArchive setting) — whether value changes are recorded to the\nmeasurement archive. Always present.\n",
+    )
+    value_name_0: str | None = Field(
+        None,
+        description="False-state value label for a binary (LOGIC/ALARM) variable —\nthe operator-visible text for value 0. Absent for non-binary\nvariables.\n",
+    )
+    value_name_1: str | None = Field(
+        None,
+        description="True-state value label for a binary (LOGIC/ALARM) variable —\nthe operator-visible text for value 1. Absent for non-binary\nvariables.\n",
     )
     is_extended: bool | None = Field(
         None,
@@ -921,6 +926,32 @@ class ServiceMessage(BaseModel):
     )
 
 
+class SuppressedServiceMessage(BaseModel):
+    central: str | None = Field(
+        None, description="CCU this suppression belongs to (multi-central grouping)."
+    )
+    interface: str | None = Field(
+        None, description='CCU interface the channel lives on (e.g. "HmIP-RF").'
+    )
+    channel: str = Field(..., description='Suppressed channel address ("ADDR:chn").')
+    parameter: str | None = Field(
+        None,
+        description='Suppressed service parameter (e.g. "LOWBAT"). Empty means every service parameter of the channel is suppressed.\n',
+    )
+    device_name: str | None = Field(
+        None, description="Human-readable channel/device name, when known."
+    )
+    name: str | None = Field(
+        None, description="Raw CCU message name that was suppressed, when known."
+    )
+
+
+class AckAllResult(BaseModel):
+    acknowledged: int = Field(
+        ..., description="Number of messages acknowledged across the scoped centrals.\n"
+    )
+
+
 class InstallModeInterfaceEntry(BaseModel):
     central: str | None = Field(None, description="CCU the interface belongs to.")
     interface: str = Field(
@@ -1019,6 +1050,14 @@ class InterfaceState(BaseModel):
     central_id: str | None = None
     host: str | None = None
     note: str | None = None
+    duty_cycle: int | None = Field(
+        None,
+        description="Transmit duty cycle in percent (0..100) for BidCos radio\ninterfaces, sourced from the CCU's listBidcosInterfaces poll.\nAbsent when unknown or when the interface carries no BidCos\ngateway (e.g. HmIP-RF, covered by device-level DUTY_CYCLE\ndata points).\n",
+    )
+    carrier_sense: int | None = Field(
+        None,
+        description="Receive carrier-sense load in percent (0..100). Absent when\nthe CCU does not report it (the common case over JSON-RPC).\n",
+    )
 
 
 class Room(BaseModel):
@@ -1040,20 +1079,6 @@ class Channel(ChannelSummary):
 class DeviceChannel(BaseModel):
     device_address: str
     channels: list[Channel]
-
-
-class Snapshot(BaseModel):
-    generated_at: AwareDatetime
-    devices: list[DeviceSummary]
-    programs: list[ProgramSummary] | None = None
-    sysvars: list[SysvarSummary] | None = None
-    rooms: list[Room] | None = None
-    functions: list[Function] | None = None
-    interfaces: list[InterfaceState] | None = None
-    device_channels: list[DeviceChannel] | None = Field(
-        None,
-        description="Present only when the request set `?include=channels` (or\n`data_points`). Nests each device's channels — and, with\n`data_points`, their data points — keyed by device address.\nParallel to `devices`, which stays unchanged.\n",
-    )
 
 
 class Role(StrEnum):
@@ -2167,10 +2192,17 @@ class AddLinkRequest(BaseModel):
     description: str | None = None
 
 
-class CentralLinksStatus(BaseModel):
-    supported: bool
-    reason: str | None = None
-    eligible_channels: int | None = None
+class UpdateLinkRequest(BaseModel):
+    sender_address: str
+    receiver_address: str
+    name: str | None = None
+    description: str | None = None
+
+
+class CentralLinksChannelStatus(BaseModel):
+    address: str
+    number: int
+    eligible: bool
 
 
 class CalculatedDPSummary(BaseModel):
@@ -2649,10 +2681,100 @@ class AlarmOutputTestRequest(BaseModel):
     )
 
 
+class GroupEntry(BaseModel):
+    id: int = Field(..., description="Numeric CCU group id.")
+    name: str = Field(..., description="Operator-facing group name.")
+    group_device_name: str | None = Field(
+        None, description="Label of the backing virtual device; often empty."
+    )
+    forbid_single_operation: bool = Field(
+        ..., description='The "operate only via group" flag.'
+    )
+    type_id: str = Field(..., description="Group-type key.")
+    type_label: str | None = Field(
+        None, description="CCU-provided type label (may be a translation key)."
+    )
+    members: list[GroupMemberEntry]
+
+
+class DeviceSummary(BaseModel):
+    address: str
+    central: str | None = Field(
+        None,
+        description="CCU this device belongs to (multi-central grouping). Omitted\nfor backends that report no owning central.\n",
+    )
+    interface: str
+    interface_id: str
+    ise_id: int | None = Field(
+        None,
+        description="CCU-internal numeric device id. Lets clients that address\ndevices by ISE_ID (e.g. the HA rename-by-ise_id path) map back\nto the device address. Absent when the backend reports none.\n",
+    )
+    model: str
+    model_label: str | None = Field(
+        None,
+        description="Localised, human-readable device-type label. Empty when no\ntranslation exists; consumers fall back to the raw `model`.\n",
+    )
+    model_icon: str | None = Field(
+        None, description="Icon identifier for the device model. Empty when none."
+    )
+    sub_model: str | None = None
+    name: str
+    manufacturer: str | None = None
+    product_group: str | None = None
+    available: bool
+    channels_count: int
+    updatable: bool = Field(
+        ...,
+        description='Device *supports* firmware updates (CCU UPDATABLE capability) —\nNOT whether one is pending. Use update_available for the\n"update available" indicator.\n',
+    )
+    update_available: bool = Field(
+        ...,
+        description="An installable firmware update is actually pending: the gated\nlatest version differs from the installed one (image already\ndelivered for HmIP-RF / available for BidCos). A newer firmware\nthe CCU merely knows about but has not delivered does NOT set this.\n",
+    )
+    update_status: UpdateStatus | None = Field(
+        None,
+        description="Daemon-derived firmware-update verdict collapsing the raw CCU\nfirmware phase and update_available signal, so a client renders\nthe update entity without carrying the phase-classification sets.\nOmitted when the device reports no firmware information.\n",
+    )
+    rooms: list[str] | None = None
+    functions: list[str] | None = Field(
+        None, description='Resolved "Gewerke" (function) labels for the device.'
+    )
+    master_pushes_config_pending: bool = Field(
+        ...,
+        description="True when the device's interface delivers reliable CONFIG_PENDING\nevents on MASTER writes (HmIP-RF, HmIP-Wired). The SPA then waits\nfor the true→false transition before refreshing MASTER. False for\nBidCos-*, VirtualDevices, CUxD — those rely on the save-path\nreload because CONFIG_PENDING never fires (or fires unreliably).\n",
+    )
+    has_sub_devices: bool = Field(
+        ...,
+        description="True when the device should be split into multiple logical\nsub-devices for northbound presentation. The SPA's CdpTilesPanel\nuses this flag to switch from a flat tile grid to per-group\nsections.\n",
+    )
+    rx_mode: RxMode | None = None
+
+
+class DeviceList(BaseModel):
+    items: list[DeviceSummary]
+    page: int
+    per_page: int
+    total: int
+
+
 class DeviceDetail(DeviceSummary):
     firmware: Firmware
     availability: Availability
     channels: list[ChannelSummary]
+
+
+class Snapshot(BaseModel):
+    generated_at: AwareDatetime
+    devices: list[DeviceSummary]
+    programs: list[ProgramSummary] | None = None
+    sysvars: list[SysvarSummary] | None = None
+    rooms: list[Room] | None = None
+    functions: list[Function] | None = None
+    interfaces: list[InterfaceState] | None = None
+    device_channels: list[DeviceChannel] | None = Field(
+        None,
+        description="Present only when the request set `?include=channels` (or\n`data_points`). Nests each device's channels — and, with\n`data_points`, their data points — keyed by device address.\nParallel to `devices`, which stays unchanged.\n",
+    )
 
 
 class AlarmReadinessChangedPayload(BaseModel):
@@ -2733,3 +2855,20 @@ class WeekProfileResponse(BaseModel):
         description='Maps each channel-lock key (e.g. "1_1") to the actuator channel it controls, so a per-channel schedule switch can be named after that channel without re-deriving the channel-group layout.',
     )
     has_climate_schedule: bool
+
+
+class CentralLinksStatus(BaseModel):
+    supported: bool
+    reason: str | None = None
+    eligible_channels: int | None = None
+    channels: list[CentralLinksChannelStatus] | None = Field(
+        None,
+        description="Per-channel suitability for central click-event routing. One\nentry per eligible (press-event) channel, letting clients\noffer a per-channel toggle alongside the device-wide one.\n",
+    )
+
+
+class GroupCentralEntry(BaseModel):
+    central: str = Field(
+        ..., description="Daemon-local central name the groups belong to."
+    )
+    groups: list[GroupEntry]
