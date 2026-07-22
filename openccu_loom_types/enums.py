@@ -795,6 +795,8 @@ class RecoveryStage(str, Enum):
 
 class RegaScript(str, Enum):
     AcceptDeviceInInbox = "accept_device_in_inbox"
+    AcknowledgeAllAlarmMessages = "acknowledge_all_alarm_messages"
+    AcknowledgeAllServiceMessages = "acknowledge_all_service_messages"
     AcknowledgeMessage = "acknowledge_message"
     CreateBackupStart = "create_backup_start"
     CreateBackupStatus = "create_backup_status"
@@ -802,7 +804,9 @@ class RegaScript(str, Enum):
     CreateRoom = "create_room"
     CreateSystemVariable = "create_system_variable"
     DeleteFunction = "delete_function"
+    DeleteProgram = "delete_program"
     DeleteRoom = "delete_room"
+    ExecuteProgramConditional = "execute_program_conditional"
     FetchAllDeviceData = "fetch_all_device_data"
     GetAlarmMessages = "get_alarm_messages"
     GetBackendInfo = "get_backend_info"
