@@ -2,9 +2,11 @@
 #   filename:  openapi.yaml
 
 from __future__ import annotations
-from pydantic import AnyUrl, AwareDatetime, BaseModel, ConfigDict, Field, SecretStr
-from typing import Any
+
 from enum import Enum, StrEnum
+from typing import Any
+
+from pydantic import AnyUrl, AwareDatetime, BaseModel, ConfigDict, Field, SecretStr
 
 
 class StartupCaptureConfig(BaseModel):
