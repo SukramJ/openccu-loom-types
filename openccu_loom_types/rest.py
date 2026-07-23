@@ -344,6 +344,16 @@ class Availability(BaseModel):
     SignalStrength: int | None = None
 
 
+class ChannelFlags(BaseModel):
+    hidden: bool = Field(..., description="Channel hidden from the operation surfaces.")
+    locked: bool = Field(..., description="Channel locked against control writes.")
+
+
+class ChannelFlagsRequest(BaseModel):
+    hidden: bool | None = None
+    locked: bool | None = None
+
+
 class ChannelSummary(BaseModel):
     address: str
     number: int
@@ -402,6 +412,14 @@ class ChannelSummary(BaseModel):
     is_custom_dp_primary: bool | None = Field(
         None,
         description='True when the channel owns a Custom-DP AND is the primary\n(group-master) channel of its group — the daemon-derived\n"device primary channel" marker. Omitted when neither\ncondition holds.\n',
+    )
+    hidden: bool | None = Field(
+        None,
+        description="Operator per-channel override (G12): when true the channel is\nhidden from the operation surfaces (data-point list, MQTT, Matter).\nThe channel stays in the device detail so it remains manageable.\nOmitted when false.\n",
+    )
+    locked: bool | None = Field(
+        None,
+        description="Operator per-channel override (G12): when true control writes to\nthe channel's VALUES paramset are rejected (423). Reads and\nMASTER/config edits are unaffected. Omitted when false.\n",
     )
 
 
