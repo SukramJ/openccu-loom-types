@@ -2,7 +2,7 @@
 #   filename:  openapi.yaml
 
 from __future__ import annotations
-from pydantic import AnyUrl, AwareDatetime, BaseModel, ConfigDict, Field
+from pydantic import AnyUrl, AwareDatetime, BaseModel, ConfigDict, Field, SecretStr
 from typing import Any
 from enum import Enum, StrEnum
 
@@ -391,6 +391,10 @@ class ChannelSummary(BaseModel):
         None,
         description="The channel's single resolved room with the group-master\nfallback applied. Empty when no unique room can be\nresolved. External clients use it as the suggested area of\nthe channel group's sub-device.\n",
     )
+    rooms: list[str] | None = Field(
+        None,
+        description="The channel's full room-assignment set. Unlike `room` it is\nnot collapsed to the unique case, so assignment editors can\nround-trip it. Omitted when the channel carries no room\nassignment.\n",
+    )
     functions: list[str] | None = Field(
         None,
         description='The channel\'s resolved "Gewerke" (function) labels — the\nchannel-level twin of `DeviceSummary.functions`. Lets clients\nmap functions at channel granularity instead of folding them\nup to the device. Omitted when the channel carries no function\nassignment.\n',
@@ -696,6 +700,27 @@ class ProgramExecuteResponse(BaseModel):
     )
 
 
+class SysvarUsageProgram(BaseModel):
+    id: str
+    name: str
+    unique_id: str | None = Field(
+        None,
+        description="Canonical loom routing key when the program is known to the hub.",
+    )
+    active: bool | None = Field(
+        None, description="Observed enabled state; omitted when unknown."
+    )
+    is_internal: bool | None = Field(
+        None, description="True for Tmp_*-programs created internally by the CCU."
+    )
+
+
+class SysvarUsage(BaseModel):
+    central: str | None = None
+    sysvar: str
+    programs: list[SysvarUsageProgram]
+
+
 class SysvarSummary(BaseModel):
     central: str | None = Field(
         None, description="CCU this system variable belongs to."
@@ -770,6 +795,33 @@ class HistoryBucket(BaseModel):
     max: float = Field(..., description="Maximum raw sample in this bucket.")
     count: int = Field(
         ..., description="Number of raw samples aggregated into this bucket."
+    )
+
+
+class Source1(StrEnum):
+    override = "override"
+    policy = "policy"
+
+
+class RecordingState(BaseModel):
+    record: bool = Field(
+        ...,
+        description="Whether this data point's live values are currently persisted to measurement history.\n",
+    )
+    source: Source1 = Field(
+        ...,
+        description='"override" when an explicit per-datapoint toggle decides, "policy" when the parameter-name glob policy decides.\n',
+    )
+
+
+class RecordingWriteRequest(BaseModel):
+    central: str
+    interface_id: str
+    channel: str
+    parameter: str
+    record: bool | None = Field(
+        None,
+        description="true/false forces recording on/off; null clears the override.",
     )
 
 
@@ -971,6 +1023,22 @@ class InstallModeInterfaceRequest(BaseModel):
     active: bool
     seconds: int | None = Field(
         None, description="Install-mode duration; defaults to 60 when omitted.", ge=0
+    )
+    central: str | None = Field(
+        None,
+        description="Disambiguates the CCU when several centrals expose the same\ninterface name. Omitted matches the first interface entry\nacross all centrals.\n",
+    )
+    device_address: str | None = Field(
+        None,
+        description="Restricts pairing to one already-known device address\n(targeted teach-in / re-pairing by serial). Only meaningful\nwith active=true; ignored on stop. Note that HmIP radios\nhave no address-targeted pairing on the CCU side — use\nsgtin + key there instead.\n",
+    )
+    sgtin: str | None = Field(
+        None,
+        description="HmIP SGTIN for the keyserver-less LOCAL teach-in. Formatted\nlabel input (dashes, spaces, lowercase) is accepted and\nnormalised server-side to 24 hex characters. Requires key,\nactive=true, and is mutually exclusive with device_address.\n",
+    )
+    key: SecretStr | None = Field(
+        None,
+        description="HmIP device key from the label: 32 hex characters, or the\nshorter Base32 label form (converted automatically). Never\nlogged or audited.\n",
     )
 
 
@@ -2111,6 +2179,17 @@ class SimpleScheduleEntry(BaseModel):
     lock_mode: str | None = None
     lock_action: str | None = None
     permission: str | None = None
+    color_type: int | None = Field(
+        None,
+        description="Universal-light colour discriminator (0 hue/saturation, 1 colour temperature, 2 effect). Opaque; carried verbatim for a lossless round-trip. Absent on non-colour devices.\n",
+    )
+    color_value: int | None = Field(
+        None,
+        description="Packed 20-bit colour/effect value; opaque. 0 is legitimate and is always round-tripped.\n",
+    )
+    output_behaviour: int | None = Field(
+        None, description="HmIP-BSL signal-LED behaviour, opaque."
+    )
 
 
 class Kind3(StrEnum):
@@ -2126,6 +2205,10 @@ class Schedule(BaseModel):
     active_profile_index: int | None = None
     profiles: dict[str, ClimateProfile] | None = None
     simple_entries: list[SimpleScheduleEntry] | None = None
+    color_capable: bool | None = Field(
+        None,
+        description="True when the device exposes per-switch-point colour/effect fields (universal lights) or an OUTPUT_BEHAVIOUR field (HmIP-BSL). The SPA shows a colour summary only when set.\n",
+    )
 
 
 class SetActiveProfileRequest(BaseModel):
@@ -2183,6 +2266,40 @@ class Link(BaseModel):
     peer_device_name: str | None = None
     peer_device_model: str | None = None
     direction: str
+    central_name: str | None = Field(
+        None,
+        description="Owning central. Populated only by the global overview (`GET /links`); empty on the per-device listing.\n",
+    )
+    interface_id: str | None = Field(
+        None,
+        description="Owning interface (wire interface id). Populated only by the global overview (`GET /links`); empty on the per-device listing.\n",
+    )
+
+
+class Visibility(StrEnum):
+    private = "private"
+    shared = "shared"
+
+
+class DiagramConfig(BaseModel):
+    id: str
+    name: str
+    visibility: Visibility
+    owner: str = Field(..., description="Owner subject.")
+    config: dict[str, Any] = Field(
+        ...,
+        description="SPA-owned diagram document (series list + default range). Opaque to the daemon except a non-empty central per series.\n",
+    )
+    created_at_ms: int
+    updated_at_ms: int
+
+
+class DiagramWriteRequest(BaseModel):
+    name: str
+    visibility: Visibility | None = Field(None, description="Defaults to private.")
+    config: dict[str, Any] | None = Field(
+        None, description="SPA-owned diagram document (series list + default range)."
+    )
 
 
 class AddLinkRequest(BaseModel):
@@ -2190,6 +2307,15 @@ class AddLinkRequest(BaseModel):
     receiver_address: str
     name: str | None = None
     description: str | None = None
+
+
+class TestLinkAtDeviceRequest(BaseModel):
+    receiver_address: str
+    sender_address: str
+    long_press: bool | None = Field(
+        None,
+        description="Select the LONG_* action group instead of SHORT_*. Default false.",
+    )
 
 
 class UpdateLinkRequest(BaseModel):
@@ -2259,9 +2385,48 @@ class InboxDevice(BaseModel):
     )
     address: str
     model: str
+    interface: str | None = Field(
+        None,
+        description='CCU interface the device was detected through. The SPA hides\nthe "replace existing device" action for HmIP interfaces,\nwhich do not support the swap.\n',
+    )
     serial: str | None = None
     manufacturer: str | None = None
     first_seen: int | None = None
+
+
+class ReplaceCandidate(BaseModel):
+    address: str
+    name: str | None = None
+    model: str | None = None
+    interface: str | None = None
+    central: str | None = None
+    model_matches: bool = Field(
+        ...,
+        description="True when the candidate's model equals the new device's (an exact swap rather than a compatible cross-type one).",
+    )
+
+
+class TeamCandidate(BaseModel):
+    address: str
+    name: str | None = None
+    team_tag: str | None = None
+    current: bool = Field(
+        ...,
+        description="True when this channel is the target channel's currently-assigned team.",
+    )
+
+
+class CommunicationTestResult(BaseModel):
+    passed: bool = Field(
+        ...,
+        description="True when the device answered the radio test frame within the poll window.",
+    )
+    started_at: AwareDatetime
+    completed_at: AwareDatetime | None = None
+    duration_ms: int
+    timed_out: bool = Field(
+        ..., description="True when the poll window elapsed before the device answered."
+    )
 
 
 class LinkableChannel(BaseModel):
@@ -2742,6 +2907,18 @@ class DeviceSummary(BaseModel):
     master_pushes_config_pending: bool = Field(
         ...,
         description="True when the device's interface delivers reliable CONFIG_PENDING\nevents on MASTER writes (HmIP-RF, HmIP-Wired). The SPA then waits\nfor the true→false transition before refreshing MASTER. False for\nBidCos-*, VirtualDevices, CUxD — those rely on the save-path\nreload because CONFIG_PENDING never fires (or fires unreliably).\n",
+    )
+    config_restore_supported: bool | None = Field(
+        None,
+        description='True when the device\'s interface exposes `restoreConfigToDevice`\n(HmIP-RF, BidCos-RF). The SPA gates the "restore config" action on\nit. False for BidCos-Wired, CUxD and VirtualDevices.\n',
+    )
+    communication_test_supported: bool | None = Field(
+        None,
+        description="True when the device's interface can run the CCU's per-device\ncommunication test (radio interfaces). The SPA gates the \"test\"\naction on it. False for VirtualDevices and CUxD.\n",
+    )
+    team_supported: bool | None = Field(
+        None,
+        description="True when the device's interface exposes channel team assignment\n(setTeam / listTeams — BidCos-RF, HmIP-RF). The SPA gates the\nteam picker on it.\n",
     )
     has_sub_devices: bool = Field(
         ...,
