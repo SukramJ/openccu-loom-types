@@ -267,6 +267,10 @@ class SuitableMemberEntry(BaseModel):
     functions: list[str] | None = Field(
         None, description="Functions the channel (or its device) is assigned to."
     )
+    config_pending: bool | None = Field(
+        None,
+        description="True when the device still has a pending configuration (CONFIG_PENDING) and cannot be assigned to a group yet; a client shows it as a non-selectable candidate with a hint.\n",
+    )
 
 
 class SuitableMembersResponse(BaseModel):
