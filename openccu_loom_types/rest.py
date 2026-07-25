@@ -217,6 +217,63 @@ class GroupMemberEntry(BaseModel):
     type_id: str | None = Field(None, description="Member-type key.")
 
 
+class CreateGroupRequest(BaseModel):
+    type_id: str = Field(
+        ..., description="Group-type key (e.g. the HmIP heating-group type)."
+    )
+    name: str = Field(..., description="Operator-facing group name.")
+    forbid_single_operation: bool | None = Field(
+        None, description='The "operate only via group" flag.'
+    )
+    members: list[str] | None = Field(
+        None, description="Member channel/device addresses to assign."
+    )
+
+
+class UpdateGroupRequest(BaseModel):
+    name: str
+    forbid_single_operation: bool | None = None
+    members: list[str] | None = None
+
+
+class GroupTypeEntry(BaseModel):
+    id: str
+    label_key: str | None = Field(
+        None, description="CCU translation key for the type label."
+    )
+
+
+class SuitableMemberEntry(BaseModel):
+    address: str
+    serial: str | None = None
+    type: str | None = Field(
+        None, description="Member kind (e.g. SENSOR_WINDOW, SWITCH_ACTUATOR)."
+    )
+    device_address: str | None = Field(
+        None,
+        description="Parent device address (address without the channel suffix); group channels by it.",
+    )
+    device_name: str | None = Field(None, description="CCU-assigned device name.")
+    device_model: str | None = Field(
+        None, description="Device model (e.g. HmIP-eTRV-2)."
+    )
+    channel_name: str | None = Field(None, description="CCU-assigned channel name.")
+    channel_no: int | None = Field(
+        None, description="Channel number within the device."
+    )
+    rooms: list[str] | None = Field(
+        None, description="Rooms the channel (or its device) is assigned to."
+    )
+    functions: list[str] | None = Field(
+        None, description="Functions the channel (or its device) is assigned to."
+    )
+
+
+class SuitableMembersResponse(BaseModel):
+    assignable: list[SuitableMemberEntry]
+    leftover: list[SuitableMemberEntry]
+
+
 class Phase(StrEnum):
     unknown = "unknown"
     waiting_for_ccu = "waiting_for_ccu"
@@ -2349,6 +2406,10 @@ class CentralLinksChannelStatus(BaseModel):
     address: str
     number: int
     eligible: bool
+    active: bool | None = Field(
+        None,
+        description="True when the CCU's report-value-usage counter for the channel is\ncurrently raised (a central link exists). Only meaningful when the\nenclosing status has `active_state_known` set.\n",
+    )
 
 
 class CalculatedDPSummary(BaseModel):
@@ -3061,6 +3122,14 @@ class CentralLinksStatus(BaseModel):
     channels: list[CentralLinksChannelStatus] | None = Field(
         None,
         description="Per-channel suitability for central click-event routing. One\nentry per eligible (press-event) channel, letting clients\noffer a per-channel toggle alongside the device-wide one.\n",
+    )
+    active_state_known: bool | None = Field(
+        None,
+        description="True when the daemon could read the CCU-side report-value-usage\nmetadata, so each channel's `active` flag reflects the live CCU\nstate. False when the backend has no metadata read path (or the\nread failed device-wide); clients then show eligibility only,\nwithout an active/inactive indicator.\n",
+    )
+    active_channels: int | None = Field(
+        None,
+        description="Count of eligible channels whose central link is currently\nactive. Only meaningful when `active_state_known` is true.\n",
     )
 
 
