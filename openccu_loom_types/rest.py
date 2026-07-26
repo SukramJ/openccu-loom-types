@@ -215,6 +215,20 @@ class Info(BaseModel):
 class GroupMemberEntry(BaseModel):
     address: str = Field(..., description="Member device or channel address.")
     type_id: str | None = Field(None, description="Member-type key.")
+    device_name: str | None = Field(
+        None,
+        description="CCU-assigned name of the member's parent device, resolved from the live device model. Omitted when the member is not in the model; the client then falls back to the address.",
+    )
+    device_model: str | None = Field(
+        None, description='Parent device model (e.g. "HmIP-STHD").'
+    )
+    channel_name: str | None = Field(
+        None, description="CCU-assigned channel name, when the member is a channel."
+    )
+    rooms: list[str] | None = Field(
+        None,
+        description="Member's assigned rooms (channel's, falling back to the device's).",
+    )
 
 
 class CreateGroupRequest(BaseModel):
