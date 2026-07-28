@@ -16,13 +16,6 @@ from __future__ import annotations
 
 from enum import Enum
 
-class AlarmAreaState(str, Enum):
-    Armed = "armed"
-    Arming = "arming"
-    Disarmed = "disarmed"
-    Pending = "pending"
-    Triggered = "triggered"
-
 class AlarmBlockerPolicy(str, Enum):
     Block = "block"
     Ignore = "ignore"
@@ -71,6 +64,13 @@ class AlarmSensorType(str, Enum):
     Panic = "panic"
     Tamper = "tamper"
     Window = "window"
+
+class AlarmZoneState(str, Enum):
+    Armed = "armed"
+    Arming = "arming"
+    Disarmed = "disarmed"
+    Pending = "pending"
+    Triggered = "triggered"
 
 class Backend(str, Enum):
     CCU = "CCU"
