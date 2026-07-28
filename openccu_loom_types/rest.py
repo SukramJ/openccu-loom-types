@@ -476,7 +476,7 @@ class ChannelSummary(BaseModel):
     )
     room: str | None = Field(
         None,
-        description="The channel's single resolved room with the group-master\nfallback applied. Empty when no unique room can be\nresolved. External clients use it as the suggested area of\nthe channel group's sub-device.\n",
+        description="The channel's single resolved room with the group-master\nfallback applied. Empty when no unique room can be\nresolved. External clients use it as the suggested zone of\nthe channel group's sub-device.\n",
     )
     rooms: list[str] | None = Field(
         None,
@@ -1692,8 +1692,8 @@ class Mode(StrEnum):
 
 
 class AlarmStateChangedPayload(BaseModel):
-    area_id: str
-    area_name: str
+    zone_id: str
+    zone_name: str
     old_state: OldState
     new_state: NewState
     mode: Mode | None = Field(
@@ -1718,7 +1718,7 @@ class Kind2(StrEnum):
 
 
 class AlarmCountdownPayload(BaseModel):
-    area_id: str
+    zone_id: str
     kind: Kind2
     remaining_s: int
     total_s: int
@@ -1729,8 +1729,8 @@ class AlarmCountdownPayload(BaseModel):
 
 
 class AlarmNotificationPayload(BaseModel):
-    area_id: str
-    area_name: str | None = None
+    zone_id: str
+    zone_name: str | None = None
     output_id: str
     output_name: str | None = None
     incident_id: int
@@ -1746,8 +1746,8 @@ class Mode1(StrEnum):
 
 
 class AlarmTriggeredPayload(BaseModel):
-    area_id: str
-    area_name: str
+    zone_id: str
+    zone_name: str
     incident_id: int
     sensor_id: str | None = Field(
         None,
@@ -1777,7 +1777,7 @@ class State(StrEnum):
 
 class AlarmPanelEntity(BaseModel):
     unique_id: str
-    area_id: str
+    zone_id: str
     name: str
     category: str
     state: State
@@ -1786,17 +1786,17 @@ class AlarmPanelEntity(BaseModel):
     master: bool | None = None
     code_arm_required: bool = Field(
         ...,
-        description="Effective per-area code requirement for arming: the area's\ncode policy AND an applicable enabled pin code exists —\nexactly the requirement the daemon enforces, so a client\nprompts for a code precisely when one is needed. The master\naggregate carries `true` when any member area requires one.\n",
+        description="Effective per-zone code requirement for arming: the zone's\ncode policy AND an applicable enabled pin code exists —\nexactly the requirement the daemon enforces, so a client\nprompts for a code precisely when one is needed. The master\naggregate carries `true` when any member zone requires one.\n",
     )
     code_disarm_required: bool = Field(
         ...,
-        description="Effective per-area code requirement for disarming; same\nderivation and master aggregation as `code_arm_required`.\n",
+        description="Effective per-zone code requirement for disarming; same\nderivation and master aggregation as `code_arm_required`.\n",
     )
 
 
 class AlarmPanelChangedPayload(BaseModel):
     unique_id: str
-    area_id: str
+    zone_id: str
     name: str
     state: str
     available: bool
@@ -1806,10 +1806,10 @@ class AlarmPanelChangedPayload(BaseModel):
 
 
 class AlarmReminderPayload(BaseModel):
-    area_id: str
-    area_name: str | None = None
+    zone_id: str
+    zone_name: str | None = None
     mode: str = Field(
-        ..., description="The protection mode the schedule expected the area to be in."
+        ..., description="The protection mode the schedule expected the zone to be in."
     )
 
 
@@ -1826,7 +1826,7 @@ class Class(StrEnum):
 
 class AlarmJournalAppendedPayload(BaseModel):
     entry_id: int
-    area_id: str | None = Field(None, description="Omitted for engine-global entries.")
+    zone_id: str | None = Field(None, description="Omitted for engine-global entries.")
     class_: Class = Field(..., alias="class")
     event: str = Field(
         ..., description="Stable machine-readable event token within the class."
@@ -1840,7 +1840,7 @@ class AlarmJournalAppendedPayload(BaseModel):
 
 
 class AlarmWalkTestProgressPayload(BaseModel):
-    area_id: str
+    zone_id: str
     sensor_id: str
     sensor_name: str | None = None
     seen: int = Field(
@@ -2560,19 +2560,19 @@ class RoomEntry(BaseModel):
     device_count: int
 
 
-class AlarmAreaConfig(BaseModel):
+class AlarmZoneConfig(BaseModel):
     model_config = ConfigDict(
         extra="allow",
     )
 
 
-class AlarmArea(BaseModel):
+class AlarmZone(BaseModel):
     id: str
     name: str
     position: int | None = Field(
-        None, description="Display ordering hint for the SPA area list."
+        None, description="Display ordering hint for the SPA zone list."
     )
-    config: AlarmAreaConfig | None = None
+    config: AlarmZoneConfig | None = None
 
 
 class Type1(StrEnum):
@@ -2644,6 +2644,13 @@ class AlarmOutputCandidate(BaseModel):
     channel_address: str
     channel_no: int
     channel_name: str | None = None
+    rooms: list[str] | None = Field(
+        None, description="The channel's CCU room assignments (picker filter/label)."
+    )
+    functions: list[str] | None = Field(
+        None,
+        description="The channel's CCU function assignments (picker filter/label).",
+    )
     classes: list[Class3] = Field(
         ...,
         description="Device-backed output classes this channel can carry, in canonical class order. The switched_siren class requires device-side auto-off (ON_TIME) and is only listed when the channel supports it.",
@@ -2743,7 +2750,7 @@ class Countdown(BaseModel):
     total_s: int | None = None
 
 
-class AlarmAreaStatus(BaseModel):
+class AlarmZoneStatus(BaseModel):
     id: str
     name: str
     state: State1 = Field(
@@ -2757,7 +2764,7 @@ class AlarmAreaStatus(BaseModel):
     )
     incident: Incident1 | None = Field(
         None,
-        description="The area's open incident, present only while `state` is `triggered`.",
+        description="The zone's open incident, present only while `state` is `triggered`.",
     )
     countdown: Countdown | None = Field(
         None,
@@ -2767,7 +2774,7 @@ class AlarmAreaStatus(BaseModel):
         None, description="Per-mode arming readiness, keyed by mode name."
     )
     walktest_active: bool = Field(
-        ..., description="True while a walk-test session is running on this area."
+        ..., description="True while a walk-test session is running on this zone."
     )
 
 
@@ -2793,14 +2800,14 @@ class AlarmArmRequest(BaseModel):
     )
     code: str | None = Field(
         None,
-        description="Alarm code supplied with the arm, when the area's code policy requires one (or to surface a duress code). Never logged or persisted in cleartext.\n",
+        description="Alarm code supplied with the arm, when the zone's code policy requires one (or to surface a duress code). Never logged or persisted in cleartext.\n",
     )
 
 
 class AlarmVerbRequest(BaseModel):
     code: str | None = Field(
         None,
-        description="Alarm code for the verb, when the area's code policy requires one. Never logged or persisted in cleartext.\n",
+        description="Alarm code for the verb, when the zone's code policy requires one. Never logged or persisted in cleartext.\n",
     )
 
 
@@ -2825,8 +2832,8 @@ class AlarmCode(BaseModel):
         description="A PIN that disarms normally but fires a silent duress alarm. Only meaningful for the pin kind.\n",
     )
     perms: AlarmCodePerms
-    areas: list[str] | None = Field(
-        None, description="Restrict to these area ids; empty means every area."
+    zones: list[str] | None = Field(
+        None, description="Restrict to these zone ids; empty means every zone."
     )
     binding: Any | None = Field(
         None,
@@ -2852,7 +2859,7 @@ class AlarmCodeRequest(BaseModel):
     )
     duress: bool | None = None
     perms: AlarmCodePerms
-    areas: list[str] | None = None
+    zones: list[str] | None = None
     binding: Any | None = Field(
         None,
         description="Engine-owned hardware-binding document (keypad_slot / remote_key).",
@@ -2868,13 +2875,13 @@ class State2(StrEnum):
 
 
 class AlarmArmAccepted(BaseModel):
-    state: State2 = Field(..., description="Resulting area state.")
+    state: State2 = Field(..., description="Resulting zone state.")
     bypassed: list[str] | None = Field(
         None, description="Sensor ids actually bypassed for this arm."
     )
     exit_delay_s: int | None = Field(
         None,
-        description="Exit delay in seconds the area is now counting down; 0 when armed immediately.",
+        description="Exit delay in seconds the zone is now counting down; 0 when armed immediately.",
     )
 
 
@@ -2892,7 +2899,7 @@ class Class4(StrEnum):
 class AlarmJournalEntry(BaseModel):
     id: int
     when: AwareDatetime
-    area_id: str
+    zone_id: str
     class_: Class4 = Field(
         ...,
         alias="class",
@@ -2934,7 +2941,7 @@ class AlarmWalkTestStatus(BaseModel):
     started_at: AwareDatetime | None = None
     sensors: list[Sensor] = Field(
         ...,
-        description="One row per sensor enrolled in the area, tracking walk-test coverage.",
+        description="One row per sensor enrolled in the zone, tracking walk-test coverage.",
     )
 
 
@@ -3054,7 +3061,7 @@ class Snapshot(BaseModel):
 
 
 class AlarmReadinessChangedPayload(BaseModel):
-    area_id: str
+    zone_id: str
     readiness: dict[str, AlarmModeReadiness] = Field(
         ..., description="Per-mode arming readiness, keyed by mode name."
     )
