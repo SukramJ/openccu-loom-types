@@ -115,6 +115,9 @@ Every change is still reviewed by a human maintainer and must pass the
 project's tests before it lands — the AI speeds up the work, it does
 not replace the review gate.
 
+Contributions made with AI assistance are welcome and subject to the
+rules in [AI_POLICY.md](./AI_POLICY.md).
+
 ## License
 
 MIT. See [LICENSE](./LICENSE).
