@@ -2560,6 +2560,11 @@ class RoomEntry(BaseModel):
     device_count: int
 
 
+class AreaRoomRef(BaseModel):
+    central: str = Field(..., description="Central (CCU) name owning the room.")
+    room: str = Field(..., description="CCU room name on that central.")
+
+
 class AlarmZoneConfig(BaseModel):
     model_config = ConfigDict(
         extra="allow",
@@ -3155,6 +3160,20 @@ class CentralLinksStatus(BaseModel):
     active_channels: int | None = Field(
         None,
         description="Count of eligible channels whose central link is currently\nactive. Only meaningful when `active_state_known` is true.\n",
+    )
+
+
+class Area(BaseModel):
+    id: str = Field(
+        ..., description="Server-generated on create; ignored in the create body."
+    )
+    name: str
+    position: int | None = Field(
+        None, description="Manual sort order (ascending), ties by name."
+    )
+    rooms: list[AreaRoomRef] | None = Field(
+        None,
+        description="Assigned rooms; read-only here (replace via PUT /areas/{id}/rooms).",
     )
 
 
