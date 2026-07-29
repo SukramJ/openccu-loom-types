@@ -2560,6 +2560,40 @@ class RoomEntry(BaseModel):
     device_count: int
 
 
+class State1(StrEnum):
+    idle = "idle"
+    checking = "checking"
+    downloading = "downloading"
+    installing = "installing"
+    failed = "failed"
+
+
+class AddonUpdateStatus(BaseModel):
+    supported: bool = Field(
+        ...,
+        description="Platform can self-install (add-on build + firmware installer present).",
+    )
+    current_version: str
+    latest_version: str | None = Field(
+        None,
+        description="Newest published release; empty before the first successful check.",
+    )
+    update_available: bool | None = None
+    release_url: str | None = Field(
+        None, description="Release-notes page of the latest version."
+    )
+    last_check: AwareDatetime | None = Field(
+        None, description="Time of the last successful check; absent before the first."
+    )
+    state: State1 = Field(
+        ...,
+        description="Lifecycle of the updater. `installing` is terminal from the caller's perspective — the daemon restarts on success.",
+    )
+    error: str | None = Field(
+        None, description="Failure detail while state is `failed`."
+    )
+
+
 class AreaRoomRef(BaseModel):
     central: str = Field(..., description="Central (CCU) name owning the room.")
     room: str = Field(..., description="CCU room name on that central.")
@@ -2722,7 +2756,7 @@ class AlarmModeReadiness(BaseModel):
     )
 
 
-class State1(StrEnum):
+class State2(StrEnum):
     disarmed = "disarmed"
     arming = "arming"
     armed = "armed"
@@ -2758,7 +2792,7 @@ class Countdown(BaseModel):
 class AlarmZoneStatus(BaseModel):
     id: str
     name: str
-    state: State1 = Field(
+    state: State2 = Field(
         ..., description="Arm-state-machine state (docs/alarm-concept.md §5)."
     )
     mode: Mode2 | None = Field(
@@ -2874,13 +2908,13 @@ class AlarmCodeRequest(BaseModel):
     enabled: bool
 
 
-class State2(StrEnum):
+class State3(StrEnum):
     arming = "arming"
     armed = "armed"
 
 
 class AlarmArmAccepted(BaseModel):
-    state: State2 = Field(..., description="Resulting zone state.")
+    state: State3 = Field(..., description="Resulting zone state.")
     bypassed: list[str] | None = Field(
         None, description="Sensor ids actually bypassed for this arm."
     )
