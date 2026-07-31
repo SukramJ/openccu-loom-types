@@ -292,6 +292,17 @@ class SuitableMembersResponse(BaseModel):
     leftover: list[SuitableMemberEntry]
 
 
+class CcuInterface(BaseModel):
+    type: str = Field(..., description="CCU interface type string (e.g. `HmIP-RF`).")
+    address: str = Field(
+        ..., description="Interface identifier the CCU uses in callbacks."
+    )
+    port: int = Field(..., description="XML-RPC port the interface listens on.")
+    url: str | None = Field(
+        None, description="Full XML-RPC endpoint URL the CCU reports."
+    )
+
+
 class Phase(StrEnum):
     unknown = "unknown"
     waiting_for_ccu = "waiting_for_ccu"
@@ -327,6 +338,34 @@ class SystemCCUEntry(BaseModel):
     url: AnyUrl | None = None
     is_ha_app: bool
     configured_interfaces: list[str]
+    auth_enabled: bool | None = Field(
+        None,
+        description="Whether the CCU requires authentication on its own\ninterfaces. False both when the CCU runs unauthenticated and\nwhen its firmware does not answer the query — a status-page\nhint, not a security guarantee.\n",
+    )
+    https_redirect_enabled: bool | None = Field(
+        None,
+        description="Whether the CCU redirects plain HTTP to HTTPS. Same caveat as\n`auth_enabled`.\n",
+    )
+    longitude: float | None = Field(
+        None,
+        description="The CCU's astro reference longitude in decimal degrees. Every\nsunrise/sunset time the CCU computes derives from it, so a\nwrong value skews astro schedules silently. Absent while the\nposition is unresolved — never reported as 0, which is a real\ncoordinate.\n",
+    )
+    latitude: float | None = Field(
+        None,
+        description="The CCU's astro reference latitude in decimal degrees. Same\nabsence rule as `longitude`.\n",
+    )
+    timezone: str | None = Field(
+        None,
+        description="The CCU's configured IANA time zone (e.g. `Europe/Berlin`),\nread from its time configuration. Read-only here: it is set on\nthe CCU itself.\n",
+    )
+    recovery_mode_supported: bool | None = Field(
+        None,
+        description="Whether this CCU offers a recovery system\n(`POST .../recovery-mode`). True for OpenCCU / RaspberryMatic\nfirmware, false for a stock CCU3 and while the product is not\nyet known — so a client hides the action rather than offering\none that cannot work.\n",
+    )
+    ccu_interfaces: list[CcuInterface] | None = Field(
+        None,
+        description="The interface adapters the CCU reports for itself — the\nCCU-side counterpart to `configured_interfaces`. Absent until\nthe first successful connect round; a difference between the\ntwo lists is the interesting signal.\n",
+    )
     readiness: Readiness = Field(
         ...,
         description='Where the central is in its readiness-gated southbound\nbring-up, so the SPA can distinguish "still initializing"\nfrom "offline".\n',
@@ -978,6 +1017,14 @@ class EnergyResponse(BaseModel):
     )
     total_feed_in_wh: float = Field(
         ..., description="Sum of every device's `total_feed_in_wh`, in Wh."
+    )
+    price_per_kwh: float | None = Field(
+        None,
+        description="Configured electricity tariff (`persistence.history.energy_price_per_kwh`), echoed so the client can derive costs. Absent or zero means no tariff is configured — a client must then show no cost at all rather than a misleading 0. The daemon does not compute the amounts: rounding and money formatting are locale decisions the client owns.\n",
+    )
+    currency: str | None = Field(
+        None,
+        description="Free-text label for amounts derived from `price_per_kwh` (symbol or ISO code; defaults to the euro sign). Never used for conversion. Only present together with a non-zero tariff.\n",
     )
 
 
