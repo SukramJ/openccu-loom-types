@@ -2486,6 +2486,10 @@ class CalculatedDPSummary(BaseModel):
     category: str | None = None
     value: Any
     observed: bool
+    available: bool = Field(
+        ...,
+        description="Whether the value is a confirmed reading — observed AND valid,\nthe same rule the generic data-point state payload applies.\nFor a calculated data point validity folds in the validity of\nevery source it derives from: a source the CCU flagged (bad\npaired STATUS, reading outside the declared bounds) makes the\ncalculated data point unavailable even though the derived\nnumber keeps updating. Clients that restore a previous state\nfor unavailable entities must read this flag; `observed` stays\ntrue across a source fault.\n",
+    )
     translated_name: str | None = Field(
         None,
         description="Locale-aware per-entity name, resolved through the same\nchain as generic data points (channel-typed translation →\nbare-parameter translation → title-cased parameter). Lets\nclients spawn calculated/combined entities with the same\nnames the reference stack generates.\n",
