@@ -787,6 +787,10 @@ class ProgramSummary(BaseModel):
         None,
         description="Program enabled state. Omitted when the CCU has not reported it\n(the Go DTO marshals the pointer with omitempty: absent, not null).\n",
     )
+    execute_available: bool | None = Field(
+        None,
+        description='Whether running the program would do anything. A program the CCU\nhas deactivated ignores its triggers and refuses a manual run, so\na consumer that offers "run now" as its own control should render\nit unavailable. The daemon answers this rather than leaving each\nconsumer to derive it from `active` — it is CCU semantics, not\npresentation. True while the flag has not been observed, so a\ncontrol is never greyed out on missing information.\n',
+    )
     last_executed: str | None = Field(
         None, description="RFC3339 timestamp of the most recent execution."
     )
