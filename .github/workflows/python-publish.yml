@@ -30,10 +30,10 @@ jobs:
       TAG_NAME: ${{ github.event.release.tag_name || github.event.client_payload.tag }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@v7.0.1
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.14"
           cache: 'pip'
@@ -71,6 +71,6 @@ jobs:
           name: release-dists
           path: dist/
       - name: Publish to PyPI (Trusted Publishing)
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # release/v1
+        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247  # release/v1
         with:
           packages-dir: dist/
