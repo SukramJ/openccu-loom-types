@@ -964,7 +964,10 @@ class RecordingWriteRequest(BaseModel):
 
 
 class EnergyBucket(BaseModel):
-    ts: AwareDatetime = Field(..., description="Start of the bucket's time span (UTC).")
+    ts: AwareDatetime = Field(
+        ...,
+        description="Start of the bucket's time span, serialised as an RFC3339 instant. For `group=day` / `group=month` this instant is the local midnight respectively local first-of-month of the daemon's timezone, so rendering it with a local date format names the calendar day or month the bucket covers.\n",
+    )
     consumed_wh: float = Field(
         ...,
         description="ENERGY_COUNTER delta over the bucket, in Wh. Never negative — see `reset`.\n",
