@@ -3644,6 +3644,10 @@ class Area(BaseModel):
 class SecurityClassState(BaseModel):
     class_: Class7 = Field(..., alias="class")
     active: bool
+    severity: Severity = Field(
+        ...,
+        description="What this class contributes to the folded severity right now — not what its name implies. Colour the class from this, never from `active`: a low battery must not look like a fire. `intrusion` is arm-aware, so an active source whose zone is disarmed grades `info` rather than `alarm`; `warning` means the arm state behind at least one active source could not be resolved. `ok` while inactive.\n",
+    )
     sources: list[AlarmSource] | None = None
     known: int = Field(
         ..., description="Sources of this class the index knows, active or not."
