@@ -1042,6 +1042,10 @@ class Change(BaseModel):
 
 
 class AuditEntry(BaseModel):
+    id: int = Field(
+        ...,
+        description="Stable identity of this entry within the responding list. A single operator action can emit several entries that agree on every other field, including the second-resolution timestamp, so this is the only safe key for per-row client state. Values are assigned by the durable store and are not comparable across daemon restarts when no durable store is configured.\n",
+    )
     central: str | None = Field(
         None,
         description="CCU this entry belongs to, derived best-effort from the device\naddress. Omitted for daemon-wide entries (e.g. CCU management).\n",
