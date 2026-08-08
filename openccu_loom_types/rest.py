@@ -2294,6 +2294,10 @@ class SurfaceInfo(BaseModel):
         None,
         description="In the embedded profile this surface's entry also decides\nwhether the Home Assistant Ingress passthrough identity may\nwrite to it.\n",
     )
+    multi_central_visible: bool | None = Field(
+        None,
+        description="The embedded default of this surface flips back to visible\nwhen the daemon serves more than one CCU. A Home Assistant\nconfig entry addresses one CCU, so on a multi-CCU daemon HA\ncannot own the config surface of the CCUs it has no entry\nfor — hiding these would leave their devices without an\neditor anywhere. The `defaults` above already reflect the\ncurrent fleet; this flag only explains why.\n",
+    )
     ha_owns: bool | None = Field(
         None, description="Home Assistant provides this surface itself."
     )
@@ -2321,6 +2325,10 @@ class SurfacesResponse(BaseModel):
     effective: dict[str, bool] = Field(
         ...,
         description="Resolved visibility of the live profile, per surface id.\nCapability and role gates are not folded in.\n",
+    )
+    centrals: int = Field(
+        ...,
+        description="How many CCUs this daemon serves. Above one it moves the\nshipped default of every surface marked\n`multi_central_visible`, so the editor needs it to explain\nwhy a default reads differently here than in the docs.\n",
     )
     surfaces: list[SurfaceInfo]
 
