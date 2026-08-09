@@ -2290,10 +2290,6 @@ class SurfaceInfo(BaseModel):
     role_admin: bool | None = Field(
         None, description="Only ever shown to admins, independent of the profile."
     )
-    write_gated: bool | None = Field(
-        None,
-        description="In the embedded profile this surface's entry also decides\nwhether the Home Assistant Ingress passthrough identity may\nwrite to it.\n",
-    )
     multi_central_visible: bool | None = Field(
         None,
         description="The embedded default of this surface flips back to visible\nwhen the daemon serves more than one CCU. A Home Assistant\nconfig entry addresses one CCU, so on a multi-CCU daemon HA\ncannot own the config surface of the CCUs it has no entry\nfor — hiding these would leave their devices without an\neditor anywhere. The `defaults` above already reflect the\ncurrent fleet; this flag only explains why.\n",
@@ -2523,6 +2519,11 @@ class CentralBehavior(BaseModel):
     )
 
 
+class Kind3(StrEnum):
+    week_profile = "week_profile"
+    climate = "climate"
+
+
 class ScheduleChannelRef(BaseModel):
     address: str
     number: int
@@ -2572,14 +2573,14 @@ class SimpleScheduleEntry(BaseModel):
     )
 
 
-class Kind3(StrEnum):
+class Kind4(StrEnum):
     climate = "climate"
     simple = "simple"
 
 
 class Schedule(BaseModel):
     channel: ScheduleChannelRef
-    kind: Kind3
+    kind: Kind4
     domain: str | None = None
     active_profile: str | None = None
     active_profile_index: int | None = None
@@ -3067,13 +3068,13 @@ class Incident1(BaseModel):
     silenced: bool | None = None
 
 
-class Kind4(StrEnum):
+class Kind5(StrEnum):
     exit_delay = "exit_delay"
     entry_delay = "entry_delay"
 
 
 class Countdown(BaseModel):
-    kind: Kind4 | None = None
+    kind: Kind5 | None = None
     remaining_s: int | None = None
     total_s: int | None = None
 
@@ -3143,7 +3144,7 @@ class AlarmCodePerms(BaseModel):
     silence: bool
 
 
-class Kind5(StrEnum):
+class Kind6(StrEnum):
     pin = "pin"
     keypad_slot = "keypad_slot"
     remote_key = "remote_key"
@@ -3152,7 +3153,7 @@ class Kind5(StrEnum):
 class AlarmCode(BaseModel):
     id: str
     name: str
-    kind: Kind5 = Field(..., description="Code class.")
+    kind: Kind6 = Field(..., description="Code class.")
     duress: bool | None = Field(
         None,
         description="A PIN that disarms normally but fires a silent duress alarm. Only meaningful for the pin kind.\n",
@@ -3178,7 +3179,7 @@ class AlarmCode(BaseModel):
 
 class AlarmCodeRequest(BaseModel):
     name: str
-    kind: Kind5
+    kind: Kind6
     pin: str | None = Field(
         None,
         description="Cleartext code, write-only, for the pin kind. Omitted on update to keep the existing hash.\n",
@@ -3701,6 +3702,18 @@ class CentralRow(BaseModel):
     )
     created_at: AwareDatetime | None = None
     updated_at: AwareDatetime | None = None
+
+
+class ScheduleDeviceSummary(BaseModel):
+    central: str = Field(..., description="The CCU this device belongs to.")
+    address: str = Field(..., description="Device address.")
+    name: str = Field(..., description="Display name.")
+    model: str | None = Field(None, description='Device type, e.g. "HmIP-eTRV-2".')
+    channel: ScheduleChannelRef
+    kind: Kind3 = Field(
+        ...,
+        description="`week_profile` when a dedicated channel carries the profile,\n`climate` when a thermostat carries it in MASTER.\n",
+    )
 
 
 class WeekProfileResponse(BaseModel):
