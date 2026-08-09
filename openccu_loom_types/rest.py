@@ -2304,6 +2304,11 @@ class SurfaceInfo(BaseModel):
     )
 
 
+class EmbeddedScope(StrEnum):
+    inside_ha = "inside_ha"
+    always = "always"
+
+
 class Profile(StrEnum):
     standalone = "standalone"
     embedded = "embedded"
@@ -2319,7 +2324,15 @@ class SurfacesResponse(BaseModel):
         ...,
         description="The master toggle — whether Home Assistant owns this daemon's config surface.",
     )
-    profile: Profile = Field(..., description="The live profile.")
+    embedded_scope: EmbeddedScope = Field(
+        ...,
+        description="Where the master toggle applies. `inside_ha` (the default)\nlimits the embedded profile to requests that arrive through\nHome Assistant, so a browser pointed straight at this daemon\nkeeps the full UI — the duplicate-editor argument that\nmotivates hiding does not apply to it. `always` restores the\ndaemon-wide behaviour.\n",
+    )
+    inside_ha: bool = Field(
+        ...,
+        description="Whether THIS request reached the daemon through Home\nAssistant, decided by the Supervisor's `X-Ingress-Path`\nheader (the remote proxy add-on forwards it). With the\ndefault scope it is what selects `profile`, so the same\nconfiguration answers differently on the other door.\n",
+    )
+    profile: Profile = Field(..., description="The profile served to this request.")
     profiles: dict[str, dict[str, Profiles]] = Field(
         ..., description="Stored, sparse overrides per profile name."
     )
@@ -2336,6 +2349,10 @@ class SurfacesResponse(BaseModel):
 
 class SurfacesRequest(BaseModel):
     embedded: bool | None = Field(None, description="Flip the master toggle.")
+    embedded_scope: EmbeddedScope | None = Field(
+        None,
+        description="Move where the master toggle applies. An unrecognised value\nis rejected rather than falling back to the default — a typo\nwould otherwise keep hiding views on direct access, which is\nwhat the operator was switching off.\n",
+    )
     profiles: dict[str, dict[str, Profiles]] | None = Field(
         None,
         description="Full desired override set per profile. The daemon reduces it\nto the sparse form before persisting.\n",
