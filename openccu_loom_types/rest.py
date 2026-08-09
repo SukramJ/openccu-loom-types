@@ -2287,6 +2287,11 @@ class SurfaceInfo(BaseModel):
         None,
         description="Surface this one lives inside. A child is never more visible\nthan its parent.\n",
     )
+    opens: str | None = Field(
+        None,
+        description="Editor this read-only overview hands off to. While that\neditor is hidden the overview stays — a fleet-wide catalogue\nanswers a question the device detail cannot — but its rows\nstop linking into a tab that is not there.\n",
+        examples=["device.configure.schedule"],
+    )
     role_admin: bool | None = Field(
         None, description="Only ever shown to admins, independent of the profile."
     )
