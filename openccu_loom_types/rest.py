@@ -195,6 +195,11 @@ class Info(BaseModel):
     )
     uptime: str
     started_at: AwareDatetime
+    config_ui_url: str = Field(
+        ...,
+        description="Externally-reachable address of this daemon's Config UI,\nderived from `north.rest.public_url` with the SPA mount\nappended. Empty when no public URL is configured.\n\nIt answers a question a client cannot answer for itself: the\naddress a client uses to TALK to the daemon (a container\nnetwork, a LAN address behind a reverse proxy) is not\nnecessarily one a browser can follow. Only the operator knows\nthat, and `public_url` is where they record it. A client that\nwants to link a person at the Config UI reads this and falls\nback to guessing from its own connection address when empty.\n\nThe mount path is appended by the daemon on purpose — a\nclient that had to know where the SPA is mounted would break\non the next mount change.\n",
+        examples=["https://loom.example.de/app/"],
+    )
     api_version: str = Field(
         ...,
         description="North-bound contract version (semver). Bumps independently\nof `version`. Minor bumps add backwards-compatible\ncapabilities; major bumps remove or rename existing\npayload fields, scopes, or capabilities.\n",
