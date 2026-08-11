@@ -3936,6 +3936,10 @@ class UnIgnoreCandidateGroup(BaseModel):
     )
     paramset: Paramset
     reason: UnIgnoreReason
+    reason_detail: str | None = Field(
+        None,
+        description='Concrete rule text behind `reason` — the matched name prefix or suffix, e.g. "STATUS_FLAG_" or "_STATUS" — so a badge can name the rule rather than its category. Absent for reasons whose rule is a membership list rather than a pattern.',
+    )
     reasons: list[UnIgnoreReason] = Field(
         ...,
         description="Every rule that matched anywhere in the fleet, in precedence order.",
