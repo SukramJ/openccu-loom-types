@@ -1529,9 +1529,33 @@ class UnIgnoreUpdateResponse(BaseModel):
     patterns: list[UnIgnoreEntry] | None = None
 
 
-class UnIgnoreCandidateList(BaseModel):
-    candidates: list[str]
-    include_master: bool | None = None
+class UnIgnoreReason(StrEnum):
+    operation_mode = "operation_mode"
+    week_profile = "week_profile"
+    master_gate = "master_gate"
+    device_specific = "device_specific"
+    ignore_list = "ignore_list"
+    wildcard_prefix = "wildcard_prefix"
+    wildcard_suffix = "wildcard_suffix"
+    hidden = "hidden"
+    channel_restricted = "channel_restricted"
+    event_suppressed = "event_suppressed"
+    internal_flag = "internal_flag"
+    read_only = "read_only"
+    unknown = "unknown"
+
+
+class Paramset(StrEnum):
+    VALUES = "VALUES"
+    MASTER = "MASTER"
+
+
+class UnIgnoreCandidateChannel(BaseModel):
+    channel: int
+    pattern: str = Field(
+        ...,
+        description="Pattern re-enabling the parameter on exactly this model and channel.",
+    )
 
 
 class Kind1(StrEnum):
@@ -3413,6 +3437,28 @@ class AlarmIncident(BaseModel):
     open: bool
 
 
+class AlarmTriggeredMotionSensor(BaseModel):
+    sensor_id: str
+    zone_id: str
+    name: str | None = None
+    channel_address: str = Field(
+        ...,
+        description="The sensor's own channel — the reset writes RESET_MOTION there.",
+    )
+    parameter: str = Field(
+        ..., description="The sensor's own parameter (e.g. MOTION), not RESET_MOTION."
+    )
+
+
+class AlarmMotionResetResult(BaseModel):
+    reset: int = Field(..., description="detectors whose write succeeded")
+    failed: int = Field(
+        ...,
+        description="Detectors whose write failed. Reported here rather than as an HTTP error: the verb ran, and a partial result is actionable.",
+    )
+    sensors: list[AlarmTriggeredMotionSensor]
+
+
 class Class10(StrEnum):
     arm = "arm"
     disarm = "disarm"
@@ -3586,6 +3632,16 @@ class Snapshot(BaseModel):
         None,
         description="Present only when the request set `?include=channels` (or\n`data_points`). Nests each device's channels — and, with\n`data_points`, their data points — keyed by device address.\nParallel to `devices`, which stays unchanged.\n",
     )
+
+
+class UnIgnoreCandidateModel(BaseModel):
+    model: str = Field(..., description="device model, e.g. HmIP-eTRV-2")
+    wildcard_pattern: str | None = Field(
+        None,
+        description='Pattern covering every channel of the model ("LOW_BAT:VALUES@HmIP-eTRV-2:all"). Absent for MASTER.',
+    )
+    channels: list[UnIgnoreCandidateChannel]
+    device_count: int
 
 
 class AlarmReadinessChangedPayload(BaseModel):
@@ -3872,6 +3928,29 @@ class GroupCentralEntry(BaseModel):
     groups: list[GroupEntry]
 
 
+class UnIgnoreCandidateGroup(BaseModel):
+    parameter: str = Field(..., description="bare parameter name, e.g. LOW_BAT")
+    label: str | None = Field(
+        None,
+        description="Localised parameter name; absent when the catalogue has no entry.",
+    )
+    paramset: Paramset
+    reason: UnIgnoreReason
+    reasons: list[UnIgnoreReason] = Field(
+        ...,
+        description="Every rule that matched anywhere in the fleet, in precedence order.",
+    )
+    simple_pattern: str | None = Field(
+        None,
+        description="Pattern that re-enables the parameter on every device and channel. Absent for MASTER, which has no short pattern form.",
+    )
+    models: list[UnIgnoreCandidateModel]
+    device_count: int = Field(
+        ..., description="distinct devices carrying the parameter"
+    )
+    channel_count: int = Field(..., description="distinct (model, channel) pairs")
+
+
 class SecuritySnapshot(BaseModel):
     severity: Severity = Field(..., description="The folded overall state.")
     classes: list[SecurityClassState] = Field(
@@ -3888,3 +3967,16 @@ class SecuritySnapshot(BaseModel):
     )
     last_alarm: SecurityNotification | None = None
     last_fault: SecurityNotification | None = None
+
+
+class UnIgnoreCandidateList(BaseModel):
+    candidates: list[str]
+    include_master: bool | None = None
+    groups: list[UnIgnoreCandidateGroup] | None = Field(
+        None,
+        description="One entry per (parameter, paramset), with the models and channels it occurs on. The flat `candidates` list is the cross-product of parameter x model x channel in three pattern formats — a 399-device fleet yields ~2800 strings out of ~45 parameters — so clients that render a picker should use this instead. Both paramsets are always present here, each group tagged with its own; `include_master` governs only `candidates`.",
+    )
+    reasons: list[UnIgnoreReason] | None = Field(
+        None,
+        description="Every suppression category the groups can carry, in display order.",
+    )

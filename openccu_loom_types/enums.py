@@ -31,6 +31,7 @@ class AlarmJournalClass(str, Enum):
     Config = "config"
     Disarm = "disarm"
     Fault = "fault"
+    Maintenance = "maintenance"
     Silence = "silence"
     Test = "test"
     Trigger = "trigger"
