@@ -2597,7 +2597,12 @@ class ClimateProfile(BaseModel):
 
 
 class SimpleScheduleEntry(BaseModel):
-    slot_no: int
+    slot_no: int = Field(
+        ...,
+        description="Slot this entry occupies, preserved so a partial update leaves unrelated slots intact. A given channel declares fewer slots (69 or 75 in the field) and that is the real bound — a slot the channel's MASTER paramset does not contain cannot be written.\n",
+        ge=1,
+        le=75,
+    )
     weekdays: list[str]
     time: str
     condition: str | None = None
@@ -2606,8 +2611,14 @@ class SimpleScheduleEntry(BaseModel):
     target_channels: list[str] | None = None
     level: float
     level_2: float | None = None
-    duration: str | None = None
-    ramp_time: str | None = None
+    duration: str | None = Field(
+        None,
+        description='Auto-revert time, as a whole number and a unit — "500ms", "10s", "65s", "5min", "1h". The value is exact: the CCU stores a (time base, factor) pair, and the string carries the factor multiplied out in that base\'s own unit rather than rounded to a larger one, so a 65-second slot reads "65s" and not "1min". Empty when the slot carries no duration.\n',
+    )
+    ramp_time: str | None = Field(
+        None,
+        description="Dimmer ramp time, same format and exactness rule as `duration`.\n",
+    )
     lock_mode: str | None = None
     lock_action: str | None = None
     permission: str | None = None
