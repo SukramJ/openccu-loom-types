@@ -1406,6 +1406,138 @@ class MatterFabricList(BaseModel):
     fabrics: list[MatterFabric]
 
 
+class Ecosystem(StrEnum):
+    apple = "apple"
+    google = "google"
+    amazon = "amazon"
+    smartthings = "smartthings"
+    aqara = "aqara"
+    home_assistant = "home_assistant"
+    unknown = "unknown"
+
+
+class MatterEcosystem(BaseModel):
+    ecosystem: Ecosystem
+    vendor_id: int
+    fabric_index: int
+    label: str | None = None
+
+
+class MatterCompatFinding(BaseModel):
+    ecosystem: str
+    code: str
+    message: str
+    device_type: int | None = Field(
+        None,
+        description="The device type concerned; absent when the finding applies to the bridge as a whole",
+    )
+
+
+class MatterCompatibility(BaseModel):
+    ecosystems: list[MatterEcosystem]
+    endpoint_count: int
+    findings: list[MatterCompatFinding]
+
+
+class MatterEndpointCluster(BaseModel):
+    id: int = Field(..., description="Cluster id")
+    name: str = Field(
+        ..., description="Empty when the cluster is not in the generated schema"
+    )
+    revision: int = Field(..., description="0 when unknown to the schema")
+
+
+class MatterEndpointInfo(BaseModel):
+    endpoint_id: int
+    parent_endpoint_id: int
+    device_type: int
+    device_type_name: str
+    device_type_revision: int | None = None
+    reachable: bool
+    friendly_name: str
+    device_address: str | None = Field(
+        None, description="Source device, absent for the root and aggregator endpoints"
+    )
+    channel_address: str | None = Field(
+        None,
+        description="Source channel, absent when the endpoint is not channel-scoped",
+    )
+    clusters: list[MatterEndpointCluster]
+
+
+class MatterEndpointList(BaseModel):
+    endpoints: list[MatterEndpointInfo]
+
+
+class MatterMdnsService(BaseModel):
+    service_type: str = Field(..., examples=["_matterc._udp"])
+    instance_name: str
+    host_name: str
+    port: int
+    addresses: list[str]
+    subtypes: list[str] = Field(
+        ...,
+        description="Service subtypes (`_L<discriminator>`, `_S<short>`, `_CM`) Apple and Google browse through",
+    )
+    txt: dict[str, str]
+
+
+class Severity(StrEnum):
+    error = "error"
+    warning = "warning"
+
+
+class MatterMdnsFinding(BaseModel):
+    severity: Severity
+    code: str = Field(
+        ..., description="Stable identifier; the message is prose and may be reworded"
+    )
+    message: str
+    service: str | None = Field(
+        None,
+        description="The advertised record this applies to; absent when it concerns the advertisement as a whole",
+    )
+
+
+class MatterMdnsDiagnostics(BaseModel):
+    advertising: bool = Field(
+        ...,
+        description="False when advertising is switched off (`north.matter.mdns_advertise: noop`)",
+    )
+    services: list[MatterMdnsService]
+    findings: list[MatterMdnsFinding]
+
+
+class MatterSession(BaseModel):
+    session_id: int = Field(..., ge=0, le=65535)
+    fabric_index: int = Field(
+        ..., description="0 for a PASE (commissioning) session", ge=0, le=255
+    )
+    peer_node_id: str = Field(..., description="64-bit node id, hex")
+    local_node_id: str = Field(..., description="64-bit node id, hex")
+    is_pase: bool = Field(
+        ..., description="Commissioning session rather than an operational (CASE) one"
+    )
+    subscriptions: int = Field(
+        ..., description="Active subscriptions riding on this session"
+    )
+    last_activity: AwareDatetime = Field(
+        ..., description="Last traffic in either direction"
+    )
+    last_peer_activity: AwareDatetime = Field(
+        ..., description="Last message received from the peer"
+    )
+    idle_seconds: int = Field(..., description="Seconds since last_activity")
+    peer_idle_seconds: int = Field(
+        ...,
+        description="Seconds since last_peer_activity — the controller-liveness signal",
+    )
+
+
+class MatterSessionList(BaseModel):
+    sessions: list[MatterSession]
+
+
 class MatterSetupPayload(BaseModel):
     discriminator: int = Field(..., ge=0, le=4095)
     passcode: int = Field(..., ge=1, le=99999998)
@@ -1989,7 +2121,7 @@ class EntityNameCatalogue(BaseModel):
     )
 
 
-class Severity(StrEnum):
+class Severity1(StrEnum):
     ok = "ok"
     info = "info"
     warning = "warning"
@@ -2018,7 +2150,7 @@ class ActiveClass(StrEnum):
 
 
 class SecurityStateChangedPayload(BaseModel):
-    severity: Severity
+    severity: Severity1
     previous_severity: PreviousSeverity | None = Field(
         None,
         description="The severity the fold left. Omitted on the first report\nafter start-up, where there is no previous value.\n",
@@ -3696,7 +3828,7 @@ class SecurityFaultChangedPayload(BaseModel):
     fault_id: str
     class_: Class1 = Field(..., alias="class")
     reason: Reason
-    severity: Severity
+    severity: Severity1
     source: AlarmSource
     open: bool = Field(
         ..., description="True when the fault was raised, false when it cleared."
@@ -3717,7 +3849,7 @@ class SecurityFaultChangedPayload(BaseModel):
 
 class SecurityNotificationPayload(BaseModel):
     class_: Class1 = Field(..., alias="class")
-    severity: Severity
+    severity: Severity1
     verb: Verb
     subject: str = Field(
         ...,
@@ -3865,7 +3997,7 @@ class Area(BaseModel):
 class SecurityClassState(BaseModel):
     class_: Class7 = Field(..., alias="class")
     active: bool
-    severity: Severity = Field(
+    severity: Severity1 = Field(
         ...,
         description="What this class contributes to the folded severity right now — not what its name implies. Colour the class from this, never from `active`: a low battery must not look like a fire. `intrusion` is arm-aware, so an active source whose zone is disarmed grades `info` rather than `alarm`; `warning` means the arm state behind at least one active source could not be resolved. `ok` while inactive.\n",
     )
@@ -3967,7 +4099,7 @@ class UnIgnoreCandidateGroup(BaseModel):
 
 
 class SecuritySnapshot(BaseModel):
-    severity: Severity = Field(..., description="The folded overall state.")
+    severity: Severity1 = Field(..., description="The folded overall state.")
     classes: list[SecurityClassState] = Field(
         ...,
         description="One entry per class the installation has sources for, in escalation order. A class without sources is absent, not inactive.\n",
