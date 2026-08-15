@@ -1534,8 +1534,22 @@ class MatterSession(BaseModel):
     )
 
 
+class MatterSessionOccupancy(BaseModel):
+    live: int = Field(..., description="Sessions with key material installed")
+    reserved: int = Field(
+        ..., description="Ids staked by a handshake that has not completed"
+    )
+    capacity: int = Field(
+        ..., description="Size of the allocator's id space (ids 1..0xFFFE)"
+    )
+    free: int = Field(
+        ..., description="Ids held by neither a live session nor a staked handshake"
+    )
+
+
 class MatterSessionList(BaseModel):
     sessions: list[MatterSession]
+    occupancy: MatterSessionOccupancy
 
 
 class MatterSetupPayload(BaseModel):
@@ -1574,7 +1588,8 @@ class MatterStatus(BaseModel):
     listening: bool = Field(..., description="UDP listener bound")
     listen_addr: str | None = Field(None, description="Effective UDP listen address")
     endpoint_count: int = Field(
-        ..., description="Bridged-endpoint count (excluding root)"
+        ...,
+        description="Bridged-endpoint count (excludes the root and Aggregator endpoints)",
     )
     fabric_count: int = Field(..., description="Commissioned fabrics")
     enabled_count: int = Field(..., description="Allowlist entries with enabled=true")
@@ -2285,6 +2300,13 @@ class DeviceRemovedPayload(BaseModel):
     device_address: str
 
 
+class DeviceAvailabilityChangedPayload(BaseModel):
+    central: str
+    interface_id: str
+    device_address: str
+    available: bool
+
+
 class OptimisticRollbackPayload(BaseModel):
     central: str
     device_address: str
@@ -2348,7 +2370,7 @@ class MatterFabricRemovedPayload(BaseModel):
 class MatterEndpointAssembledPayload(BaseModel):
     endpoint_count: int = Field(
         ...,
-        description="Number of endpoints in the assembled topology, including the root + Aggregator.",
+        description="Bridged-endpoint count of the assembled topology (excludes the root and Aggregator endpoints).",
         ge=0,
     )
 
@@ -2631,11 +2653,11 @@ class InterfaceSpec(BaseModel):
     )
     remote_path: str | None = Field(
         None,
-        description='URL path override for XML-RPC requests. Empty means "use backend default".',
+        description='URL path override for XML-RPC requests, for a CCU reached through a reverse proxy that exposes it elsewhere. Must be an absolute path on the configured host: it may not be the bare "/", may not start with "//", and may not carry a scheme, a query, a fragment or a ".." segment. Empty means "use backend default" ("/RPC2", "/groups" for VirtualDevices).\n',
     )
     rpc_type: RpcType | None = Field(
         None,
-        description='Transport selector. Empty means "derive from interface name".',
+        description='Restates the transport the interface name already implies (CUxD is binrpc, every other interface xmlrpc). The transport is not selectable per interface: a value contradicting the derived one is rejected at config load. Empty means "derive from interface name". `jsonrpc` is accepted by the schema for compatibility but names no transport the daemon can drive, so it is rejected at config load like any other contradiction.\n',
     )
 
 
@@ -2975,6 +2997,10 @@ class InboxDevice(BaseModel):
     serial: str | None = None
     manufacturer: str | None = None
     first_seen: int | None = None
+    pending_creation: bool | None = Field(
+        None,
+        description="True when the daemon itself is holding the device back:\nwith `central.behavior.delay_new_device_creation` enabled the\nannounced descriptions are parked until an operator accepts\nthem, so the device exists on the CCU but has no data points\nhere yet. Accepting it (POST /devices/{addr}/accept) also\nmaterialises it.\n",
+    )
 
 
 class ReplaceCandidate(BaseModel):
