@@ -10,6 +10,9 @@ from pydantic import AnyUrl, AwareDatetime, BaseModel, ConfigDict, Field, Secret
 
 
 class StartupCaptureConfig(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
     enabled: bool = Field(
         ..., description="When true, the daemon opens a diagnostics capture at boot."
     )
@@ -21,7 +24,26 @@ class StartupCaptureConfig(BaseModel):
     )
     anonymise: bool = Field(
         ...,
-        description="Whether to hash device-address-shaped values in the recorded archive.",
+        description="Whether device-address-shaped values in the recorded archive are hashed. Responses always carry the effective value.",
+    )
+
+
+class StartupCaptureConfigWrite(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    enabled: bool = Field(
+        ..., description="When true, the daemon opens a diagnostics capture at boot."
+    )
+    duration_seconds: int = Field(
+        ...,
+        description="Duration of the boot-time capture. Zero falls back to the default (300 s).",
+        ge=0,
+        le=1800,
+    )
+    anonymise: bool | None = Field(
+        True,
+        description="Whether to hash device-address-shaped values in the recorded archive. Omitting the key means true; send `false` explicitly to switch anonymisation off.",
     )
 
 
@@ -1420,7 +1442,15 @@ class MatterFabric(BaseModel):
         le=254,
     )
     fabric_id: int
+    fabric_id_hex: str = Field(
+        ...,
+        description="The exact 64-bit fabric id as 16 uppercase hex digits. A JSON number carries only 53 bits of integer precision, so a client that renders `fabric_id` shows rounded low digits for any id above 2^53. Render this field.",
+    )
     node_id: int
+    node_id_hex: str = Field(
+        ...,
+        description="The exact 64-bit operational node id as 16 uppercase hex digits, in the form controllers and chip-tool print it. Render this field rather than `node_id`, which loses precision in transport.",
+    )
     vendor_id: int = Field(..., ge=0, le=65535)
     vendor_name: str | None = Field(
         None,
@@ -1954,7 +1984,10 @@ class HubMetricChangedPayload(BaseModel):
 
 class HubConnectivityChangedPayload(BaseModel):
     central: str
-    interface_id: str
+    interface_id: str = Field(
+        ...,
+        description="The interface's wire id `<central>-<interface>` — the same id GET /interfaces reports and the REST connectivity data point carries.",
+    )
     reachable: bool
     latency_ms: float | None = Field(
         None, description="Probe round-trip in milliseconds; omitted when not measured."
@@ -2294,7 +2327,10 @@ class HubMetricDataPoint(BaseModel):
 
 
 class HubConnectivityDataPoint(BaseModel):
-    interface_id: str
+    interface_id: str = Field(
+        ...,
+        description="The interface's wire id `<central>-<interface>` (e.g. `ccu1-HmIP-RF`) — the same id GET /interfaces reports, so a client can build its per-interface entities from /interfaces and key this value onto them.",
+    )
     reachable: bool
 
 
@@ -2997,6 +3033,11 @@ class BackupEntry(BaseModel):
     central: str
     bytes: int
     created_at: AwareDatetime
+
+
+class EditSessionRequest(BaseModel):
+    key: str
+    token: str
 
 
 class EditSessionResponse(BaseModel):
@@ -3936,7 +3977,10 @@ class CentralRow(BaseModel):
         ...,
         description="Daemon-local identifier; must be unique. This is the\ncanonical central-scope discriminator: guaranteed equal to\n`SystemCCUEntry.name` and to the `central` field in\nWS / payload envelopes (`name == SystemCCUEntry.name ==\npayload.central`). Changing it re-scopes every per-central\nrequest, subscription and payload for this CCU.\n",
     )
-    host: str = Field(..., description="CCU hostname or IP address.")
+    host: str = Field(
+        ...,
+        description="CCU hostname or IP address. Present but empty on the two read operations when the caller is below the admin role; the sibling connection fields are omitted outright there.",
+    )
     serial: str | None = Field(
         None,
         description='CCU hardware serial, set when the central is adopted from SSDP/UPnP discovery. Empty for YAML / manually-entered rows. Lets discovery mark a CCU "already configured" by serial regardless of its host.',
