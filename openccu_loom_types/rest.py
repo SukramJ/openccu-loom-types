@@ -3532,6 +3532,10 @@ class SecuritySourceView(BaseModel):
         None,
         description="An operator decision, not the classifier, produced this verdict.",
     )
+    override_included: bool | None = Field(
+        None,
+        description="The stored override's raw inclusion bit, present only when `overridden` is true. A read surface seeds its include/exclude toggle from it so a prior exclusion is not silently undone on the next save; absent means no override is stored and the default-included behaviour holds.\n",
+    )
     since: AwareDatetime | None = None
 
 

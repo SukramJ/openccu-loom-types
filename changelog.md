@@ -1,3 +1,7 @@
+# Version 0.4.1 (2026-08-17)
+
+- Feat: regenerate from openccu-loom v0.61.3 for daemon api 6.2.0. `DAEMON_API_VERSION` → 6.2.0 and `SCHEMA_DIGEST` refreshed; see the generated module diff for added/changed types.
+
 # Version 0.4.0 (2026-08-16)
 
 - Feat (BREAKING): regenerate from openccu-loom v0.61.1 for daemon api 6.1.0. `DAEMON_API_VERSION` → 6.1.0 and `SCHEMA_DIGEST` refreshed; see the generated module diff for added/changed types. The daemon flagged this contract change as BREAKING — review the module diff for removed/renamed fields before merging.
