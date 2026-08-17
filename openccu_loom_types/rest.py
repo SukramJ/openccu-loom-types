@@ -2,11 +2,9 @@
 #   filename:  openapi.yaml
 
 from __future__ import annotations
-
-from enum import Enum, StrEnum
-from typing import Any
-
 from pydantic import AnyUrl, AwareDatetime, BaseModel, ConfigDict, Field, SecretStr
+from typing import Any
+from enum import Enum, StrEnum
 
 
 class StartupCaptureConfig(BaseModel):
@@ -3531,6 +3529,10 @@ class SecuritySourceView(BaseModel):
     overridden: bool | None = Field(
         None,
         description="An operator decision, not the classifier, produced this verdict.",
+    )
+    override_included: bool | None = Field(
+        None,
+        description="The stored override's raw inclusion bit, present only when `overridden` is true. A read surface seeds its include/exclude toggle from it so a prior exclusion is not silently undone on the next save; absent means no override is stored and the default-included behaviour holds.\n",
     )
     since: AwareDatetime | None = None
 
