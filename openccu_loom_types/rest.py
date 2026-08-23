@@ -1829,6 +1829,10 @@ class DataPointValueChangedPayload(BaseModel):
         ...,
         description="New value in its native CCU type (bool/int/float/string/list/null).",
     )
+    display_value: float | None = Field(
+        None,
+        description="`value` expressed in the unit the data point names, i.e.\n`value * multiplier`. Present only when that projection is\nnon-trivial; absent means `value` already is the displayable\nnumber.\n\nCarries the same meaning as `display_value` on the REST\ndata-point summary and must agree with it: a client seeds a\nreading from REST and updates it from here, so a value scaled on\none plane and raw on the other makes the reading jump on the\nfirst push. Render `display_value` when present and `value`\notherwise; writes always carry `value`, which stays the raw CCU\nwire value.\n",
+    )
     previous: Any | None = Field(
         None,
         description='Prior value. Omitted when no prior value was tracked (initial\npush). Future revisions may surface a `kind: "initial"|"change"|"refresh"`\ndiscriminator on the envelope.\n',
