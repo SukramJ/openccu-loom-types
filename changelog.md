@@ -1,3 +1,24 @@
+# Version 0.5.2 (2026-08-23)
+
+- Feat: regenerate from openccu-loom v0.64.1 for daemon api 7.7.0. `DAEMON_API_VERSION` → 7.7.0 and `SCHEMA_DIGEST` refreshed.
+
+  One field: `DataPointValueChangedPayload.display_value`. It is not new on the
+  wire — the daemon has emitted it on the `datapoint.value_changed` broadcast
+  since api 7.2.0, alongside the `display_value` on the REST data-point summary
+  — but only the REST half was ever written into the daemon's OpenAPI
+  components, which is where these models come from. So the typed WebSocket
+  payload had no such field and no consumer of this package could read it.
+
+  It matters for anyone who seeds a reading from REST and updates it from the
+  push: without the field the push carries only the raw CCU `value`, so a data
+  point with a non-trivial multiplier jumps between the two planes — a dimmer
+  seeded at "42 %" that pushes 0.8. Render `display_value` when present and
+  `value` otherwise; writes always carry `value`.
+
+  Because the field can be observed from any 7.2.0..7.6.0 daemon whose spec
+  does not declare it, `display_value is None` means "not projected here", not
+  "this daemon cannot send it".
+
 # Version 0.5.1 (2026-08-23)
 
 - Feat: regenerate from openccu-loom v0.64.0 for daemon api 7.6.0. `DAEMON_API_VERSION` → 7.6.0 and `SCHEMA_DIGEST` refreshed; see the generated module diff for added/changed types.
