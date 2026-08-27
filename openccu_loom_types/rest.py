@@ -1367,6 +1367,10 @@ class Identity(BaseModel):
         None,
         description="How the request authenticated. `ingress` is the Home Assistant Ingress passthrough the add-on deployment uses.",
     )
+    expires_at: AwareDatetime | None = Field(
+        None,
+        description='The instant the credential behind this identity stops being accepted, in UTC. Absent means the credential has no server-side expiry — a `basic`, `ingress` or unbounded `bearer` identity. It is the deadline a long-lived consumer needs: a WebSocket captures its identity at the upgrade and is closed when this instant passes, so a client that reads it can refill its credential through the in-band `{op:"reauth"}` frame instead of discovering the rotation through a 401.',
+    )
 
 
 class UserListEntry(BaseModel):
