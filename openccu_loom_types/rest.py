@@ -2403,7 +2403,8 @@ class DeviceCreatedPayload(BaseModel):
     device_address: str
     model: str
     source: str | None = Field(
-        None, description="hmenum.SourceOfDeviceCreation (CACHE, INIT, NEW_DEVICE, …)."
+        None,
+        description="Which kind of arrival this is, from `hmenum.SourceOfDeviceCreation`: `NEW` a CCU pairing, `REFRESH` a factory-reset re-pair (the device kept its address but rebuilt its channels), `MANUAL` an operator accepting a device out of the deferred-creation inbox, `CACHE` a device restored from the persisted description cache at boot. `INIT` is defined by the enum but has no producer on this broadcast. Treat the set as forward-compatible and ignore values you do not know.",
     )
 
 
