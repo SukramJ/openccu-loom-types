@@ -3146,6 +3146,10 @@ class InboxDevice(BaseModel):
     serial: str | None = None
     manufacturer: str | None = None
     first_seen: int | None = None
+    awaiting_release: bool | None = Field(
+        None,
+        description='True when the device is already accepted and fully\nmaterialised — it has its CCU ise_id, its channels and its\ndata points, and it can be renamed and assigned rooms right\nnow — but is still withheld from the ecosystems (MQTT and\ntherefore Home Assistant, the Matter bridge, outbound\nwebhooks) until the operator finishes onboarding it with\nPOST /devices/{addr}/release.\n\nThis is the onboarding wizard\'s middle state and a different\nask than `pending_creation`: that one means "decide whether\nthis device exists", this one means "configure it, then\npublish it". A client must not offer an accept action for an\nentry flagged here — it is already accepted.\n',
+    )
     pending_creation: bool | None = Field(
         None,
         description="True when the daemon itself is holding the device back:\nwith `central.behavior.delay_new_device_creation` enabled the\nannounced descriptions are parked until an operator accepts\nthem, so the device exists on the CCU but has no data points\nhere yet. Accepting it (POST /devices/{addr}/accept) also\nmaterialises it.\n",
