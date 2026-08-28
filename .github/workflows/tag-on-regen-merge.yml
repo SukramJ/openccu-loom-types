@@ -17,8 +17,28 @@ permissions:
 
 jobs:
   tag:
+    # Paused deliberately, not broken: the job runs only when the repository
+    # variable AUTO_TAG_REGEN is set to 'true', and it is unset.
+    #
+    # Why: 103 of 404 releases across the openccu-loom chain originate here,
+    # and this repository changes no hand-written line in 98 of 104 version
+    # bumps. 54 of its 106 publications never reached a pin in any consumer.
+    # The cause is this job — every merged regeneration PR tags, and the tag
+    # publishes to PyPI, so nobody ever decides to release. Regeneration PRs
+    # are still opened and merged; only the tag now waits for a human who
+    # wants that version adopted.
+    #
+    # This is a measurement with a deadline. After four weeks, compare the
+    # release count against the preceding period. The expectation from the
+    # history is roughly half. If the number does not move, the churn was not
+    # this automation, and the case for folding this package into
+    # openccu-loom-client (SukramJ/openccu-loom-client#122) has to be rebuilt
+    # on something else before it is acted on.
+    #
+    # Re-enable by setting the variable — no code change, no review.
     if: >
       github.repository_owner == 'SukramJ'
+      && vars.AUTO_TAG_REGEN == 'true'
       && github.event.pull_request.merged == true
       && startsWith(github.event.pull_request.head.ref, 'regen/daemon-')
     name: Tag merged regeneration
