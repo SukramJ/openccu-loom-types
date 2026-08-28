@@ -1873,7 +1873,8 @@ class CustomDataPointStateChangedPayload(BaseModel):
         description="Canonical loom-namespaced routing key (`loom_<routing-key>`)\nfor this custom data point. Always present and non-empty — see\nDataPointValueChangedPayload.unique_id.\n",
     )
     state: dict[str, Any] = Field(
-        ..., description="Composed state snapshot — keys depend on the CDP category."
+        ...,
+        description="Composed state snapshot — keys depend on the CDP category.\n\n**Units and scales are the ones a Home Assistant client\nexpects, not the CCU's wire values.** This is the abstraction\nplane: the raw parameter values live on the data-point plane\n(`DataPointValueChangedPayload.value`, `GET\n/devices/{addr}/channels/{ch}/data-points`), where the daemon\nreports whatever the CCU sent.\n\nThe one that has caused a real mis-read: for a colour light,\n`color` is `{h, s}` with **hue in degrees 0..360 and\nsaturation 0..100** — already scaled from the wire\n`SATURATION` parameter, which carries the fraction 0..1. A\nclient that reads `color.s` and scales it again ends up with\nevery colour fully saturated. The `set_color` operation takes\nsaturation on the same 0..100 scale, so the two directions\nmatch and neither needs converting.\n",
     )
 
 
@@ -2406,6 +2407,16 @@ class DeviceCreatedPayload(BaseModel):
         None,
         description="Which kind of arrival this is, from `hmenum.SourceOfDeviceCreation`: `NEW` a CCU pairing, `REFRESH` a factory-reset re-pair (the device kept its address but rebuilt its channels), `MANUAL` an operator accepting a device out of the deferred-creation inbox, `CACHE` a device restored from the persisted description cache at boot. `INIT` is defined by the enum but has no producer on this broadcast. Treat the set as forward-compatible and ignore values you do not know.",
     )
+    released: bool | None = Field(
+        None,
+        description="Whether the device has finished onboarding and may be\nadopted. `false` means it is accepted and configurable but\ndeliberately not yet published to the ecosystems — a\nconsumer that adopts devices should wait for the matching\n`device.released` frame rather than act on this one.\n\nCarried on the creation frame rather than left to a\nseparate lookup because the alternative is a race: a client\nthat reads the state from a snapshot can receive this push\nfirst and adopt a device it would have filtered.\n\nAlways `true` on an installation that never used the\nonboarding wizard.\n",
+    )
+
+
+class DeviceReleasedPayload(BaseModel):
+    central: str
+    interface_id: str
+    device_address: str
 
 
 class DeviceRemovedPayload(BaseModel):
