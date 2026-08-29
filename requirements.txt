@@ -1,2 +1,1 @@
-# Runtime-Abhängigkeiten (siehe pyproject.toml -> [project].dependencies)
-pydantic>=2.13.4
+# This distribution ships no modules; see pyproject.toml -> [project].dependencies.

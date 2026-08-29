@@ -1,7 +1,8 @@
 name: CI
-# Runs the test suite on every PR and on pushes to main. This is the status
-# check the regeneration auto-merge waits on: configure branch protection on
-# `main` to require the "Test" check before merging.
+# The distribution ships no modules — this checks that the metadata-only
+# wheel still builds and that its one dependency resolves. There is nothing
+# left to test: the modules, their generators and their guards moved to
+# openccu-loom-client (its #122).
 # yamllint disable-line rule:truthy
 on:
   pull_request:
@@ -16,9 +17,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  build:
     if: github.repository_owner == 'SukramJ'
-    name: Test
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -27,82 +28,27 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
-          cache: 'pip'
-          cache-dependency-path: pyproject.toml
+          python-version: "3.14"
 
-      - name: Install package + dev tooling
-        run: pip install -e '.[dev]'
+      - name: Build the wheel
+        run: |
+          pip install --upgrade build
+          python -m build
 
-      - name: Run tests
-        run: make test
-
-  # Guards that the committed generated modules still match what `make generate`
-  # produces from the daemon's contract assets — catches hand-edits to enums.py /
-  # rest.py / ws.py / the stamped const.py block that would drift from the daemon.
-  #
-  # The daemon ref is taken from the regen branch name (regen/daemon-<tag>); the
-  # check is a no-op success on every other branch. It MUST stay a single job
-  # that always runs so it can be a required status check without leaving normal
-  # PRs stuck waiting on a skipped job — hence the per-step `if`, not a job-level
-  # one.
-  regen-clean:
-    if: github.repository_owner == 'SukramJ'
-    name: Regen clean
-    runs-on: ubuntu-latest
-    env:
-      HEAD_REF: ${{ github.head_ref }}
-    steps:
-      - name: Detect regeneration PR
-        id: detect
+      - name: Assert it ships no modules
         run: |
           set -euo pipefail
-          if [[ "${HEAD_REF}" == regen/daemon-* ]]; then
-            TAG="${HEAD_REF#regen/daemon-}"
-            echo "is_regen=true" >> "$GITHUB_OUTPUT"
-            echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-            echo "Regeneration PR for daemon ${TAG} — will verify it is reproducible"
+          WHEEL="$(ls dist/*.whl)"
+          echo "inspecting $WHEEL"
+          if python -c "
+          import sys, zipfile
+          names = zipfile.ZipFile(sys.argv[1]).namelist()
+          leaked = [n for n in names if not n.split('/')[0].endswith('.dist-info')]
+          print('\\n'.join(names))
+          sys.exit(1 if leaked else 0)
+          " "$WHEEL"; then
+            echo "metadata-only wheel confirmed"
           else
-            echo "is_regen=false" >> "$GITHUB_OUTPUT"
-            echo "Not a regen/daemon-* branch — nothing to verify"
-          fi
-
-      - name: Checkout types repo
-        if: steps.detect.outputs.is_regen == 'true'
-        uses: actions/checkout@v7.0.1
-
-      - name: Checkout daemon at the branch's tag
-        if: steps.detect.outputs.is_regen == 'true'
-        uses: actions/checkout@v7.0.1
-        with:
-          repository: SukramJ/openccu-loom
-          ref: ${{ steps.detect.outputs.tag }}
-          path: openccu-loom
-
-      - name: Set up Python
-        if: steps.detect.outputs.is_regen == 'true'
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-          cache: 'pip'
-          cache-dependency-path: pyproject.toml
-
-      - name: Install package + dev tooling
-        if: steps.detect.outputs.is_regen == 'true'
-        run: pip install -e '.[dev]'
-
-      - name: Regenerate and assert no drift
-        if: steps.detect.outputs.is_regen == 'true'
-        run: |
-          set -euo pipefail
-          make generate OPENCCU_LOOM_REPO=openccu-loom
-          # datamodel-codegen stamps a fresh `# timestamp:` header into rest.py on
-          # every run, so ignore that line — a timestamp-only change is not drift.
-          IGNORE='^#   timestamp:'
-          if ! git diff --quiet -I"${IGNORE}" -- openccu_loom_types/; then
-            echo "::error::make generate from daemon ${{ steps.detect.outputs.tag }} produced a diff — the committed modules are not reproducible. Re-run 'make generate' and commit, and do not hand-edit generated files."
-            git --no-pager diff --stat -I"${IGNORE}" -- openccu_loom_types/
-            git --no-pager diff -I"${IGNORE}" -- openccu_loom_types/
+            echo "::error::the wheel ships files outside .dist-info — this release must stay metadata-only, or an environment holding it would shadow openccu_loom_client/wire/"
             exit 1
           fi
-          echo "Generated modules are reproducible from daemon ${{ steps.detect.outputs.tag }}"

@@ -1,3 +1,28 @@
+# Version 0.6.0 (2026-08-29)
+
+- **Retired.** This distribution no longer ships any Python modules. The
+  generated Pydantic models and enum catalogue moved into `openccu-loom-client`
+  as `openccu_loom_client.wire` (that repository's #122); import from
+  `openccu_loom_client.wire.rest`, `.ws` and `.enums`. The wire contract is
+  unchanged — same generated output, same daemon assets, same generators.
+
+  `0.6.0` is metadata plus a dependency on `openccu-loom-client`. Upgrading to
+  it removes the stale modules from an environment that still holds them, which
+  is the common case because Home Assistant never uninstalls an abandoned
+  requirement. Leaving an older version installed is harmless: the two
+  distributions own disjoint top-level packages, so the orphan is inert —
+  verified in a clean venv (0 overlapping files, the client imports with 0.5.9
+  installed on top and after it is uninstalled).
+
+  Why: since the auto-tag landed on 2026-06-22, 154 daemon releases produced 84
+  releases here, 84 of 84 out of a regeneration commit and none carrying a
+  hand-written line, while 54 of 106 publications never reached a pin in any
+  consumer. No consumer ever imported the package directly.
+
+  The generators, the regeneration workflow and the reproducibility guard moved
+  with the modules. `tag-on-regen-merge.yml` did not: a regeneration now opens a
+  pull request in the client and stops.
+
 # Version 0.5.10 (2026-08-28)
 
 - Feat: regenerate from openccu-loom v0.67.0 for daemon api 7.23.0. `DAEMON_API_VERSION` → 7.23.0 and `SCHEMA_DIGEST` refreshed; see the generated module diff for added/changed types.
