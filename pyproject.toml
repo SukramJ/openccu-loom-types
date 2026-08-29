@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openccu-loom-types"
-version = "0.6.0"
+version = "0.6.1"
 description = "Retired — the generated types now ship inside openccu-loom-client"
 readme = "README.md"
 license = { text = "MIT" }
@@ -15,7 +15,7 @@ requires-python = ">=3.14"
 # requirement — can be upgraded onto the package that actually holds the
 # bindings instead of keeping a stale copy of them.
 dependencies = [
-    "openccu-loom-client>=2026.8.34",
+    "openccu-loom-client>=2026.8.33",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

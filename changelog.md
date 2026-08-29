@@ -1,3 +1,20 @@
+# Version 0.6.1 (2026-08-29)
+
+- **Fix: require a client version that exists.** `0.6.0` declared
+  `openccu-loom-client>=2026.8.34`, and there is no such release — the client
+  collapsed its never-tagged `2026.8.34` back onto the unreleased `2026.8.33`
+  (its #140) after this dependency was written, and this file was not carried
+  along. Every `pip install openccu-loom-types` on `0.6.0` therefore failed to
+  resolve.
+
+  `0.6.1` requires `>=2026.8.33`, which is on PyPI and is the release that
+  actually carries the folded-in wire bindings. Nothing else changes: this
+  distribution still ships no Python modules.
+
+  Yank `0.6.0` if you can — it cannot be installed, so nothing depends on it,
+  and leaving it as the newest version means a plain `pip install` keeps
+  picking the broken one.
+
 # Version 0.6.0 (2026-08-29)
 
 - **Retired.** This distribution no longer ships any Python modules. The
